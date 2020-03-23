@@ -169,7 +169,6 @@ def init_theta(n1,n2,activation):
 #CHANGE IF WE USE DEEP NN!
 def SGD(batch_size,X,Y,model,lr=0.001): #Takes random examples of the training set --> faster gradient descent, accuracy is slightly lower.
     m = np.shape(X)[1]
-    print(batch_size)
     for i in range(0,m,batch_size):
         X_batch = X[:,i:i+batch_size]
         Y_batch = Y[:,i:i+batch_size]
@@ -414,27 +413,31 @@ class layer:
 # individual[11] = amount of final layer nodes (nodes_f)
 
 def F(genome): #The fitness function inputs a certain amount of hyperparameters into the NN_Basic, and outputs its accuracy
-    n_epochs_i = int(round(genome[0])) #Needs to be a whole number --> integer
+    n_epochs_i = int(math.ceil(genome[0])) #Needs to be a whole number number that is not 0 --> integer & ceiling
     if genome[1] >= 1: #Ensuring the learning rate is a value between 0 and 1
-        lr_i = 1
+        lr_i = genome[1]/100
     elif genome[1] <= 0:
-        lr_i = 0
+        lr_i = 0.000001 #to avoid /0 error, or get negative logs.
     else:
         lr_i = genome[1]
 
     if genome[2] >= 1: #Ensuring the learning rate decay is a value between 0 and 1
-        lr_decay_i = 1
+        lr_decay_i = genome[2]/100
     elif genome[2] <= 0:
-        lr_decay_i = 0
+        lr_decay_i = 0.000001 #to avoid /0 error, or get negative logs.
     else:
         lr_i = genome[2]
-    batch_size_i = int(round(genome[3])) #Needs to be a whole number --> integer
+
+    if genome[3] <= 0:
+        batch_size_i = 1
+    else:
+        batch_size_i = int(math.ceil(genome[3])) #Needs to be a whole number --> integer & ceil (so it doesn't become 0)
 
     t_0 = time.perf_counter()
     model = NN_Basic(X.shape[0], Y.shape[0])
     fitness_1 = 1 - acc_level(model, X, Y, X_test, Y_test, model_accuracy, n_epochs_i, batch_size_i, lr_i, lr_decay_i)
     t_f = time.perf_counter()
-    Delta_t = (t_f - t_0) #* penalty
+    Delta_t = (t_f - t_0) * 0.01 #Penalty to equalise acc_level and time's influence
     fitness = fitness_1 + Delta_t
     return(fitness)
 
@@ -450,12 +453,12 @@ def cross(A, B):
             C = np.append(C, B[i])
     return(C)
 
-def mutate(C, mut_range = 0.5, mut_chance = 0.05):
+def mutate(C, mut_range = 0.5, mut_chance = 0.2): #Arbitrary values
     #mut_range is the range of the amplitude of the mutation is going from -mut_range to mut_range, to ensure both larger & smaller, positive & negatives values for the new mutation.
     #mut_chance is the chance of the mutation actually occuring.
     for i in range(np.size(C)):
         if np.random.uniform(0,1) <= mut_chance: #For a 5% chance, mutate (perform addition) C_i with either 0.95 or 1.05 (slightly increasing or decreasing the value of an allele)
-            mut_range = np.random.choice(1-mut_range, 1+mut_range)
+            mut_range = np.random.choice([1-mut_range, 1+mut_range])
             C[i] = C[i] * mut_range
     return(C)
 
@@ -483,30 +486,31 @@ def cross_and_mutate(pop, pop_size):
         mutate(offspring[i])
     return offspring
 
-def run(N = 50, gen_length = 4, num_generations = 40, Fitness_function = F):
+def run(N = 4, gen_length = 4, num_generations = 10, Fitness_function = F):
     size_population = 4 * N #the actual amount of individuals
     pop_size = (size_population, gen_length) #The entire population, described in terms of its population size and the amount of alleles per individual.
     new_population = np.ndarray((pop_size)) #Generate gen 0, with random values for each allele between 0 and 100. <--- ARBITRARY VALUES, FEEL FREE TO TWEAK!
     for individual in range(size_population):
         for gene in range(gen_length):
-            new_population[individual, gene] = np.random.randint(0, 101)
+            new_population[individual, gene] = np.random.randint(0, 101) #int instead of flt to highly decrease calculation time
+    print(new_population)
 
     fitness = np.zeros(size_population) #initialise the fitness function as an array in which the fitness of all individuals can be described.
     fitness_his = [] #This variable will be used to plot the fitness over iterations.
     for generation in range(num_generations):
         for individual in range(size_population):
             fitness[individual] = Fitness_function(new_population[individual]) #The fitness is determined by the values of the genes of that individual
-        Ranking = np.argsort(fitness)[::-1] #Ranking individuals from lowest to highest fitness value.
+        Ranking = np.argsort(fitness)[::1] #Ranking individuals from lowest to highest fitness value.
         fitness = fitness[Ranking] #Sort the fitness according to the ranks
         fitness_his = np.append(fitness_his, fitness[0]) #Add the highest fitness value as entry for this generation to the history.
         new_population = new_population[Ranking] #Sort the new population according to the ranks
         offspring_crossover = cross_and_mutate(new_population, pop_size) #Cross and mutate for the new generation with the ordered old generation.
         new_population = offspring_crossover #Initialise the new generation as the generation to be ranked, etc.
+        print("Generation", generation, "has a highest fitness of", fitness[0], "with genome", new_population[0])
     for individual in range(size_population): #The entire loop is repeated one last time for the final generation.
             fitness[individual] = Fitness_function(new_population[individual])
-    Ranking = np.argsort(fitness)[::-1]
-    fitness = fitness[Ranking]
-    new_population = new_population[Ranking]
+    Ranking = np.argsort(fitness)
+    fitness = fitness[Ranking]µ
     return(fitness[0], new_population[0], fitness_his)
 
 #Log 18-03:
