@@ -426,7 +426,7 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
     elif genome[2] <= 0:
         lr_decay_i = 0.000001 #to avoid /0 error, or get negative logs.
     else:
-        lr_i = genome[2]
+        lr_decay_i = genome[2]
 
     if genome[3] <= 0:
         batch_size_i = 1
@@ -486,7 +486,7 @@ def cross_and_mutate(pop, pop_size):
         mutate(offspring[i])
     return offspring
 
-def run(N = 4, gen_length = 4, num_generations = 10, Fitness_function = F):
+def run(N = 10, gen_length = 4, num_generations = 30, Fitness_function = F):
     size_population = 4 * N #the actual amount of individuals
     pop_size = (size_population, gen_length) #The entire population, described in terms of its population size and the amount of alleles per individual.
     new_population = np.ndarray((pop_size)) #Generate gen 0, with random values for each allele between 0 and 100. <--- ARBITRARY VALUES, FEEL FREE TO TWEAK!
@@ -510,7 +510,7 @@ def run(N = 4, gen_length = 4, num_generations = 10, Fitness_function = F):
     for individual in range(size_population): #The entire loop is repeated one last time for the final generation.
             fitness[individual] = Fitness_function(new_population[individual])
     Ranking = np.argsort(fitness)
-    fitness = fitness[Ranking]µ
+    fitness = fitness[Ranking]
     return(fitness[0], new_population[0], fitness_his)
 
 #Log 18-03:
