@@ -23,8 +23,9 @@ state = {'score': 0}
 path = turtle.Turtle(visible=False)
 writer = turtle.Turtle(visible=False)
 aim = vector(5, 0)
-pacman = vector(-40, -80)
+pacman = [vector(-40, -80), vector(0,0)]
 chase = False
+tunnel = [160, 161, 162, 163, 173, 174, 175, 176]
 tiles = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
@@ -34,7 +35,7 @@ tiles = [
     0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0,
     0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-    3, 3, 3, 3, 1, 1, 1, 0, 0, 0, 1, 1, 1, 3, 3, 3, 3, 0, 0, 0,
+    1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
     0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
     0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
@@ -75,14 +76,14 @@ def valid(point, isPac):
         #return False
     if tiles[index] == 0:
         return False
-    if tiles[index] == 3 and isPac == False:
+    if index in tunnel and isPac == False:
         return False
 
     index = offset(point + 19)
 
     if tiles[index] == 0:
         return False
-    if tiles[index] == 3 and isPac == False:
+    if index in tunnel and isPac == False:
         return False
         
     return point.x % 20 == 0 or point.y % 20 == 0
@@ -91,7 +92,6 @@ def world():
     "Draw world using path."
     window.bgcolor('blue')
     path.color('black')
-
     for index in range(len(tiles)):
         tile = tiles[index]
 
@@ -105,37 +105,17 @@ def world():
                 path.goto(x + 10, y + 10)
                 path.dot(2, 'white')
 
-def move():
-    "Move pacman and all ghosts."
+def update():
     writer.undo()
     writer.write(state['score'])
-    global prev_aim
-    global aim
-    global attempt
-    global pacman
     pac.clear()
     ghost.clear()
-    if offset(pacman) == 160:
-        print("tp")
-        pacman = vector(115,20)
-    if offset(pacman) == 176:
-        print("tp")
-        pacman = vector(-185 , 20)
-    if attempt == 10:
-        aim = prev_aim.copy()
-        attempt = 0
-    if valid(pacman + aim, True):
-        pacman.move(aim)
-        prev_aim = aim.copy()
-    else:
-        if valid(pacman + prev_aim, True):
-            pacman.move(prev_aim)
-            attempt += 1
+    movePacman()
     movePinky(pinky, prev_aim)
     moveInky(inky, prev_aim)
     moveBlinky(blinky)
     moveClyde(clyde)
-    index = offset(pacman)
+    index = offset(pacman[0])
 
     if tiles[index] == 1:
         tiles[index] = 2
@@ -145,23 +125,48 @@ def move():
         square(x, y)
 
     pac.up()
-    pac.goto(pacman.x + 10, pacman.y + 10)
+    pac.goto(pacman[0].x + 10, pacman[0].y + 10)
     pac.dot(20, 'yellow')
     
     for point, course, col in ghosts:
-        if abs(pacman - point) < 10:
+        if abs(pacman[0] - point) < 10:
             print("you died")
             return
+            
+    print(tiles)
+    window.ontimer(update, 1000)
 
-    window.ontimer(move, 50)
+def movePacman():
+    global prev_aim
+    global aim
+    global pacman
+    global attempt
+    tiles[offset(pacman[0])] == 2
+    if offset(pacman[0]) == 160:
+        print("tp")
+        pacman[0] = vector(115,20)
+    if offset(pacman[0]) == 176:
+        print("tp")
+        pacman[0] = vector(-185 , 20)
+    if attempt == 10:
+        aim = prev_aim.copy()
+        attempt = 0
+    if valid(pacman[0] + aim, True):
+        pacman[0].move(aim)
+        prev_aim = aim.copy()
+    else:
+        if valid(pacman[0] + prev_aim, True):
+            pacman[0].move(prev_aim)
+            attempt += 1
+    tiles[offset(pacman[0])] == 3
 
-
+        
 def moveBlinky(blinky):
     loc = blinky[0]
     course = blinky[1]
     col = blinky[2]
     plan = vector(0,0)
-    toPac = findPac(pacman, loc)
+    toPac = findPac(pacman[0], loc)
     if valid(loc + toPac, False) and (toPac != -course):
         course.x = toPac.x
         course.y = toPac.y
@@ -195,17 +200,17 @@ def moveClyde(clyde):
     course = clyde[1]
     col = clyde[2]
     global chase
-    if abs(pacman - loc) > 500:
+    if abs(pacman[0] - loc) > 500:
         chase = True
         return
-    if abs(pacman - loc) < 100:
+    if abs(pacman[0] - loc) < 100:
         chase = False
     if chase == True:
         moveBlinky(clyde)
         return
     else:
         plan = vector(0,0)
-        goal = -findPac(pacman, loc)
+        goal = -findPac(pacman[0], loc)
         if valid(loc + goal, False) and (goal != -course):
             course.x = goal.x
             course.y = goal.y
@@ -238,7 +243,7 @@ def movePinky(pinky, pacAim):
     loc = pinky[0]
     course = pinky[1]
     col = pinky[2]
-    goal = findPac(pacman + 10*pacAim, loc)
+    goal = findPac(pacman[0] + 10*pacAim, loc)
     if valid(loc + goal, False) and (goal != -course):
         course.x = goal.x
         course.y = goal.y
@@ -272,7 +277,7 @@ def moveInky(inky, pacAim):
     loc = inky[0]
     course = inky[1]
     col = inky[2]
-    goalTile = blinky[0] + ((pacman + 2*pacAim) - blinky[0]) * 2
+    goalTile = blinky[0] + ((pacman[0] + 2*pacAim) - blinky[0]) * 2
     goal = findPac(goalTile, loc)
     if valid(loc + goal, False) and (goal != -course):
         course.x = goal.x
@@ -303,11 +308,6 @@ def moveInky(inky, pacAim):
     ghost.dot(20, col)
     return
 
-def change(x, y):
-    #if valid(pacman + vector(x, y)):
-    aim.x = x
-    aim.y = y
-
 def findPac(pacLoc, loc):
     direction = pacLoc - loc
     if abs(direction.x) > abs(direction.y):
@@ -322,6 +322,27 @@ def findPac(pacLoc, loc):
             plan = vector(0,5)
     return(plan)
 
+def right(prev_aim):
+    aim.x = prev_aim.y
+    aim.y = -prev_aim.x
+
+def left(prev_aim):
+    aim.x = -prev_aim.y
+    aim.y = prev_aim.x
+
+def turn_around(prev_aim):
+    aim.x = -prev_aim.x
+    aim.y = -prev_aim.y
+
+def get_input(NN_output):
+    #to be used with the NN
+    global prev_aim
+    if NN_output[0] == 1:
+        left(prev_aim)
+    elif NN_output[1] == 1:
+        right(prev_aim)
+    elif NN_output[2] == 1:
+        turn_around(prev_aim)
 
 window.listen()
 window.onkey(lambda: run(), 'Right')
@@ -336,10 +357,10 @@ def run():
     writer.goto(160, 160)
     writer.color('white')
     writer.write(state['score'])
-    window.onkey(lambda: change(5, 0), 'Right')
-    window.onkey(lambda: change(-5, 0), 'Left')
-    window.onkey(lambda: change(0, 5), 'Up')
-    window.onkey(lambda: change(0, -5), 'Down')
+    window.onkey(lambda: right(prev_aim), 'Right')
+    window.onkey(lambda: left(prev_aim), 'Left')
+    #window.onkey(lambda: change(0, 5), 'Up')
+    window.onkey(lambda: turn_around(prev_aim), 'Down')
     world()
-    move()
+    update()
 turtle.done()
