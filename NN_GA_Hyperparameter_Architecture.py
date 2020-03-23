@@ -437,7 +437,7 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
     model = NN_Basic(X.shape[0], Y.shape[0])
     fitness_1 = 1 - acc_level(model, X, Y, X_test, Y_test, model_accuracy, n_epochs_i, batch_size_i, lr_i, lr_decay_i)
     t_f = time.perf_counter()
-    Delta_t = (t_f - t_0) #* penalty
+    Delta_t = (t_f - t_0) * 0.01 #Penalty to equalise acc_level and time's influence
     fitness = fitness_1 + Delta_t
     return(fitness)
 
@@ -500,7 +500,7 @@ def run(N = 4, gen_length = 4, num_generations = 10, Fitness_function = F):
     for generation in range(num_generations):
         for individual in range(size_population):
             fitness[individual] = Fitness_function(new_population[individual]) #The fitness is determined by the values of the genes of that individual
-        Ranking = np.argsort(fitness)[::-1] #Ranking individuals from lowest to highest fitness value.
+        Ranking = np.argsort(fitness)[::1] #Ranking individuals from lowest to highest fitness value.
         fitness = fitness[Ranking] #Sort the fitness according to the ranks
         fitness_his = np.append(fitness_his, fitness[0]) #Add the highest fitness value as entry for this generation to the history.
         new_population = new_population[Ranking] #Sort the new population according to the ranks
@@ -509,9 +509,8 @@ def run(N = 4, gen_length = 4, num_generations = 10, Fitness_function = F):
         print("Generation", generation, "has a highest fitness of", fitness[0], "with genome", new_population[0])
     for individual in range(size_population): #The entire loop is repeated one last time for the final generation.
             fitness[individual] = Fitness_function(new_population[individual])
-    Ranking = np.argsort(fitness)[::-1]
-    fitness = fitness[Ranking]
-    new_population = new_population[Ranking]
+    Ranking = np.argsort(fitness)
+    fitness = fitness[Ranking]µ
     return(fitness[0], new_population[0], fitness_his)
 
 #Log 18-03:
