@@ -1,15 +1,12 @@
-"""Pacman, classic arcade game.
-Exercises
-1. Change the board.
-2. Change the number of ghosts.
-3. Change where pacman starts.
-4. Make the ghosts faster/slower.
-5. Make the ghosts smarter.
-"""
+#to-do:
+#Add ghost locations to tiles
+#Create input array for NN (tiles, directions of pacman + ghosts)
 
 from random import choice
 import turtle
 from freegames import floor, vector
+import numpy
+from numpy import random
 prev_aim = vector(5,0)
 pac = turtle.Turtle(visible=False)
 ghost = turtle.Turtle(visible=False)
@@ -105,11 +102,21 @@ def world():
                 path.goto(x + 10, y + 10)
                 path.dot(2, 'white')
 
+
+prev_index = offset(pacman[0])
+
 def update():
+    global prev_index
+    #output = get_output()
+    #this simulates the NN output
+    #get_input(output)
+    #this uses the NN output to control Pacman
     writer.undo()
     writer.write(state['score'])
     pac.clear()
     ghost.clear()
+    tiles[prev_index] = 2
+    prev_index = offset(pacman[0])
     movePacman()
     movePinky(pinky, prev_aim)
     moveInky(inky, prev_aim)
@@ -123,7 +130,7 @@ def update():
         x = (index % 20) * 20 - 200
         y = 180 - (index // 20) * 20
         square(x, y)
-
+    tiles[index] = 3
     pac.up()
     pac.goto(pacman[0].x + 10, pacman[0].y + 10)
     pac.dot(20, 'yellow')
@@ -131,22 +138,17 @@ def update():
     for point, course, col in ghosts:
         if abs(pacman[0] - point) < 10:
             print("you died")
-            return
-            
-    print(tiles)
-    window.ontimer(update, 1000)
+            return   
+    window.ontimer(update, 50)
 
 def movePacman():
     global prev_aim
     global aim
     global pacman
     global attempt
-    tiles[offset(pacman[0])] == 2
     if offset(pacman[0]) == 160:
-        print("tp")
         pacman[0] = vector(115,20)
     if offset(pacman[0]) == 176:
-        print("tp")
         pacman[0] = vector(-185 , 20)
     if attempt == 10:
         aim = prev_aim.copy()
@@ -158,7 +160,6 @@ def movePacman():
         if valid(pacman[0] + prev_aim, True):
             pacman[0].move(prev_aim)
             attempt += 1
-    tiles[offset(pacman[0])] == 3
 
         
 def moveBlinky(blinky):
@@ -343,6 +344,13 @@ def get_input(NN_output):
         right(prev_aim)
     elif NN_output[2] == 1:
         turn_around(prev_aim)
+
+def get_output():
+    #dummy function to replicate NN output
+    output = [0,0,0,0]
+    choice = numpy.random.randint(4)
+    output[choice] = 1
+    return output
 
 window.listen()
 window.onkey(lambda: run(), 'Right')
