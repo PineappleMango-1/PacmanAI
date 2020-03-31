@@ -376,6 +376,8 @@ class PacmanGame:
         self.window.onkey(lambda: self.turn_around(self.prev_aim), 'Down')
         self.world()
         self.update()
+        turtle.done()
+
         
 
         
@@ -383,4 +385,3 @@ class PacmanGame:
 
 game = PacmanGame()
 game.run()
-turtle.done()
