@@ -6,6 +6,12 @@ import matplotlib.pyplot as plt
 import time
 from IPython.display import clear_output
 from os.path import join
+<<<<<<< HEAD
+=======
+from pacman_game import PacmanGame
+# One-hot encoding
+
+>>>>>>> 128a9b4499ba3b196766e7e3c5ee6c85705e39ca
 
 # One-hot encoding
 def one_hot(Y, n_class):
@@ -571,3 +577,7 @@ def run(N = 10, gen_length = 8, num_generations = 10, Fitness_function = F):
 
 best_fitness, best_genome, fitness_his = run()
 print(fitness_his)
+
+# Two lines below create a new game and start it
+# game = PacmanGame()
+# game.run()
