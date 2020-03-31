@@ -6,9 +6,8 @@ import matplotlib.pyplot as plt
 import time
 from IPython.display import clear_output
 from os.path import join
+
 # One-hot encoding
-
-
 def one_hot(Y, n_class):
     # accept a (1xm) 'label' vector, number of classes   <--- e.g. Y = [1, 3, 5, 8] if x_0 -> x_4 corresponds to these classes. (y_0 = 1, y_1 = 3, etc.)
     # and return a nxm 'one-hot' matrix                  <--- n_class the amount of different classes.
@@ -135,6 +134,8 @@ class softmax:
         return dH_dZ
 
 #All loss functions
+
+#CE_loss function.
 class CE_loss:
     def get_loss(self,H,Y):
         L = np.sum(np.dot(-Y.T,np.log(H)))/Y.shape[1]
@@ -154,7 +155,7 @@ def init_theta(n1,n2,activation):
         M = np.random.randn(n2,n1)*np.sqrt(2./n1)
     elif activation in [relu] :
         M = np.random.randn(n2,n1)*np.sqrt(1./n1)
-    elif activation == tanh:
+    elif activation in [tanh]:
         M = np.random.randn(n2,n1)*np.sqrt(1./(n1+n2))
     else:
         M = np.random.randn(n2,n1)
@@ -181,7 +182,7 @@ def SGD(batch_size,X,Y,model,lr=0.001): #Takes random examples of the training s
         model.optim(lr)
     return model.loss
 
-#Training + Plotting said training function
+#Training + Plotting said training function. TO BE REPLACED WITH REINFORCEMENT LEARNING!
 def train(model, X, Y, X_test, Y_test, metric, n_epochs=100, batch_size=4, lr=0.01, lr_decay=1):
     data_size = X.shape[1]
     for e in range(n_epochs):
@@ -273,41 +274,42 @@ class NN_Basic:
     def __init__(self, X_size, Y_size, lossfn = CE_loss, activation = relu, layers = 3, nodes_b = 150, nodes_h1 = 50, nodes_h2 = 25, nodes_h3 = 10): #<--- nodes_x added for more layers if wanted
         # Build the network. Recommended depth: 2-5 layers. Number of nodes: below 200 preferably.
         # Final activation should be softmax, since each datapoint belongs to only one class
+        self.layers = layers
         self.L_b = layer(X_size, nodes_b, activation)
-        if layers == 2: #Hard coded because I am not a good coder...
+        if self.layers == 2: #Hard coded because I am not a good coder...
             self.L_f = layer(nodes_b, Y_size, softmax)
 
-        elif layers == 3:
+        elif self.layers == 3:
             self.L_h1 = layer(nodes_b, nodes_h1, activation)
             self.L_f = layer(nodes_h1, Y_size, softmax)
 
-        elif layers == 4:
+        elif self.layers == 4:
             self.L_h1 = layer(nodes_b, nodes_h1, activation)
             self.L_h2 = layer(nodes_h1, nodes_h2, activation)
-            self.L_f = layer(nodes_h1, Y_size, softmax)
+            self.L_f = layer(nodes_h2, Y_size, softmax)
 
-        elif layers == 5:
+        elif self.layers == 5:
             self.L_h1 = layer(nodes_b, nodes_h1, activation)
             self.L_h2 = layer(nodes_h1, nodes_h2, activation)
             self.L_h3 = layer(nodes_h2, nodes_h3, activation)
-            self.L_f = layer(nodes_h1, Y_size, softmax)
+            self.L_f = layer(nodes_h3, Y_size, softmax)
         self.lossfn = lossfn()
 
     def f_pass(self, X):
         A_b = self.L_b.forward(X)
-        if layers == 2:
+        if self.layers == 2:
             A_f = self.L_f.forward(A_b)
 
-        elif layers == 3:
+        elif self.layers == 3:
             A_h1 = self.L_h1.forward(A_b)
             A_f = self.L_f.forward(A_h1)
 
-        elif layers == 4:
+        elif self.layers == 4:
             A_h1 = self.L_h1.forward(A_b)
             A_h2 = self.L_h2.forward(A_h1)
             A_f = self.L_f.forward(A_h2)
 
-        elif layers == 5:
+        elif self.layers == 5:
             A_h1 = self.L_h1.forward(A_b)
             A_h2 = self.L_h2.forward(A_h1)
             A_h3 = self.L_h3.forward(A_h2)
@@ -325,36 +327,36 @@ class NN_Basic:
         #use the model's lossfn's diff() to find dL_dZ
         dL_dZ = self.lossfn.diff(self.H, Y)
 
-        if layers == 2:
+        if self.layers == 2:
             self.L_f.out_grad(dL_dZ, self.L_b.A, m)
             self.L_b.grad(self.L_f.dZ, self.L_f.W, X, m)
 
-        if layers == 3:
+        if self.layers == 3:
             self.L_f.out_grad(dL_dZ, self.L_h1.A, m)
             self.L_h1.grad(self.L_f.dZ, self.L_f.W, self.L_b.A, m)
 
-        if layers == 4:
+        if self.layers == 4:
             self.L_f.out_grad(dL_dZ, self.L_h2.A, m)
             self.L_h2.grad(self.L_f.dZ, self.L_f.W, self.L_h1.A, m)
             self.L_h1.grad(self.L_h2.dZ, self.L_h2.W, self.L_b.A, m)
 
-        if layers == 5:
+        if self.layers == 5:
             self.L_f.out_grad(dL_dZ, self.L_h3.A, m)
             self.L_h3.grad(self.L_f.dZ, self.L_f.W, self.L_h2.A, m)
             self.L_h2.grad(self.L_h3.dZ, self.L_h3.W, self.L_h1.A, m)
             self.L_h1.grad(self.L_h2.dZ, self.L_h2.W, self.L_b.A, m)
 
-        if layers >= 3:
+        if self.layers >= 3:
             self.L_b.grad(self.L_h1.dZ, self.L_h1.W, X, m)
 
     def optim(self, lr):
         #call each layer's step() to update their respective W and B
         self.L_b.step(lr)
-        if layers >= 3:
+        if self.layers >= 3:
             self.L_h1.step(lr)
-        if layers >= 4:
+        if self.layers >= 4:
             self.L_h2.step(lr)
-        if layers >= 5:
+        if self.layers >= 5:
             self.L_h3.step(lr)
         self.L_f.step(lr)
 
@@ -397,45 +399,86 @@ class layer:
 
 ###The Genetic Algorithm
 #For this project, the gen_length of the first organisms (being hyperparameters of the NN) is 4.
-# individual[0] = number of epochs (n_epochs)
-# individual[1] = learn rate (lr)
-# individual[2] = learn rate decay (lr_decay)
-# individual[3] = batch size (batch_size)
+# (individual[0] = number of epochs (n_epochs)) ##Elena: You might want to remove this for now, as it interferes with the fitness function telling you how good the structure is.
+# individual[0] = learn rate (lr)
+# individual[1] = learn rate decay (lr_decay)
+# individual[2] = batch size (batch_size)
 
-#If the initial test is succesful, the following parameters might be added, giving gen_length = 12:
-# individual[4] = loss function (lossfn)
-# individual[5] = activation function (activation)
-# individual[6] = number of layer (layers)
-# individual[7] = amount of begin layer nodes (nodes_b)
-# individual[8] = amount of first hidden layer nodes (nodes_h1)
-# individual[9] = amount of second hidden layer nodes (nodes_h2)
-# individual[10] = amount of third hidden layer nodes (nodes_h3)
-# individual[11] = amount of final layer nodes (nodes_f)
+#If the initial test is succesful, the following parameters might be added, giving gen_length = 8 or 9:
+# individual[3] = activation function (activation)
+# individual[4] = number of layer (layers)
+# individual[5] = amount of first hidden layer nodes (nodes_h1)
+# individual[6] = amount of second hidden layer nodes (nodes_h2)
+# individual[7] = amount of third hidden layer nodes (nodes_h3)
+# (individual[8] = loss function (lossfn)) (if we find a need for better loss functions)
 
 def F(genome): #The fitness function inputs a certain amount of hyperparameters into the NN_Basic, and outputs its accuracy
-    n_epochs_i = int(math.ceil(genome[0])) #Needs to be a whole number number that is not 0 --> integer & ceiling
-    if genome[1] >= 1: #Ensuring the learning rate is a value between 0 and 1
+    #n_epochs_i = int(math.ceil(genome[0])) ##Needs to be a whole number number that is not 0 --> integer & ceiling. Currently not used, due to Elena's advise.
+    n_epochs_i = 50 #Arbitrary value!
+
+    if genome[0] >= 1: #Ensuring the learning rate is a value between 0 and 1
         lr_i = genome[1]/100
-    elif genome[1] <= 0:
+    elif genome[0] <= 0:
         lr_i = 0.000001 #to avoid /0 error, or get negative logs.
     else:
-        lr_i = genome[1]
+        lr_i = genome[0]
 
-    if genome[2] >= 1: #Ensuring the learning rate decay is a value between 0 and 1
+    if genome[1] >= 1: #Ensuring the learning rate decay is a value between 0 and 1
         lr_decay_i = genome[2]/100
-    elif genome[2] <= 0:
+    elif genome[1] <= 0:
         lr_decay_i = 0.000001 #to avoid /0 error, or get negative logs.
     else:
-        lr_decay_i = genome[2]
+        lr_decay_i = genome[1]
 
-    if genome[3] <= 0:
+    if genome[2] <= 0: #Batch Size
         batch_size_i = 1
     else:
-        batch_size_i = int(math.ceil(genome[3])) #Needs to be a whole number --> integer & ceil (so it doesn't become 0)
+        batch_size_i = int(math.ceil(genome[2])) #Needs to be a whole number --> integer & ceil (so it doesn't become 0)
+
+    if genome[3] <= 33: #Activation function
+        activation_i = sigmoid
+    elif 33 < genome[3] <= 66:
+        activation_i = relu
+    elif genome[3] > 66:
+        activation_i = tanh 
+
+    if genome[4] <= 25: #Number of layers & nodes per layer
+        layers_i = 2
+    elif 25 < genome[4] <= 50:
+        layers_i = 3
+    elif 50 < genome[4] <= 75:
+        layers_i = 4
+    elif genome[4] > 75:
+        layers_i = 5
+
+    #For nodes per layer, we might want to find a more efficient way (Maybe if layers_i == 3 for example, only load nodes_h1_i)
+    if genome[5] > 200: #Nodes in first hidden layer
+        nodes_h1_i = 200
+    elif genome[5] <= 1:
+        nodes_h1_i = 1
+    else:
+        nodes_h1_i = int(math.ceil(genome[5])) #Ceil is arbitrarely chosen here
+
+    if genome[6] > 200: #Nodes in second hidden layer
+        nodes_h2_i = 200
+    elif genome[6] <= 1:
+        nodes_h2_i = 1
+    else:
+        nodes_h2_i = int(math.ceil(genome[6])) #Ceil is arbitrarely chosen here
+
+    if genome[7] > 200: #Nodes in third hidden layer
+        nodes_h3_i = 200
+    elif genome[7] <= 1:
+        nodes_h3_i = 1
+    else:
+        nodes_h3_i = int(math.ceil(genome[7])) #Ceil is arbitrarely chosen here
 
     t_0 = time.perf_counter()
-    model = NN_Basic(X.shape[0], Y.shape[0])
+    #Debug help:
+    #print(activation_i, layers_i, nodes_h1_i, nodes_h2_i, nodes_h3_i)
+    model = NN_Basic(X.shape[0], Y.shape[0], lossfn = CE_loss, activation = activation_i, layers = layers_i, nodes_b = 150, nodes_h1 = nodes_h1_i, nodes_h2 = nodes_h2_i, nodes_h3 = nodes_h3_i)
     fitness_1 = 1 - acc_level(model, X, Y, X_test, Y_test, model_accuracy, n_epochs_i, batch_size_i, lr_i, lr_decay_i)
+    print(1-fitness_1)
     t_f = time.perf_counter()
     Delta_t = (t_f - t_0) * 0.01 #Penalty to equalise acc_level and time's influence
     fitness = fitness_1 + Delta_t
@@ -486,7 +529,7 @@ def cross_and_mutate(pop, pop_size):
         mutate(offspring[i])
     return offspring
 
-def run(N = 10, gen_length = 4, num_generations = 30, Fitness_function = F):
+def run(N = 10, gen_length = 8, num_generations = 10, Fitness_function = F):
     size_population = 4 * N #the actual amount of individuals
     pop_size = (size_population, gen_length) #The entire population, described in terms of its population size and the amount of alleles per individual.
     new_population = np.ndarray((pop_size)) #Generate gen 0, with random values for each allele between 0 and 100. <--- ARBITRARY VALUES, FEEL FREE TO TWEAK!
