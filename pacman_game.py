@@ -345,13 +345,13 @@ class PacmanGame:
         directions = numpy.zeros(4)
         for i in range(4):
             if self.ghosts[i][1] == vector(0,5):
-                directions[i] = 1
+                directions[i] = 8
             elif self.ghosts[i][1] == vector(0,-5):
-                directions[i] = 2
+                directions[i] = 9
             elif self.ghosts[i][1] == vector(5, 0):
-                directions[i] = 3
+                directions[i] = 10
             elif self.ghosts[i][1] == vector(-5, 0):
-                directions[i] = 4
+                directions[i] = 11
         output = numpy.append(self.tiles, directions)
         return output
     # self.window.listen()
