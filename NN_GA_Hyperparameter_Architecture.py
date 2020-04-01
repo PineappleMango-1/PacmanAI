@@ -6,13 +6,9 @@ import matplotlib.pyplot as plt
 import time
 from IPython.display import clear_output
 from os.path import join
-<<<<<<< HEAD
 from pacman_game import PacmanGame
 # One-hot encoding
 
-=======
-from pacman_game import  PacmanGame
->>>>>>> ce0adb63f5c5d1f3a8ce868e820213244e28d6ce
 
 # One-hot encoding
 def one_hot(Y, n_class):
