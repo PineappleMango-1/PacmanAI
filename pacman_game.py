@@ -1,10 +1,7 @@
-<<<<<<< HEAD
 
-=======
 #to-do:
 #Add ghost locations to tiles
 #Create input array for NN (tiles, directions of pacman + ghosts)
->>>>>>> 4e2b5e2749961dbb3da1ac1d9f9046cee279c7df
 
 from random import choice
 import turtle
@@ -420,5 +417,5 @@ class PacmanGame:
         
     # self.turtle.done()
 
-game = PacmanGame()
-game.run()
+# game = PacmanGame()
+# game.run()
