@@ -115,8 +115,8 @@ class softmax:
         #dL_dZ = 1/n*(H-Y)
         #return dL_dZ
 
-class RL_train:
-#Initialise theta function
+#class RL_train:
+    #Initialise theta function
 def init_theta(n1,n2,activation):
     #n1 = number of nodes in prev layer (input)
     #n2 = number of nodes in next layer (output)
@@ -134,26 +134,26 @@ def init_theta(n1,n2,activation):
 
 
 
-#Gradient Descent, Train & Acc level are removed --> To be found in Old_NN_GA_Architecture_No_RL.py
+    #Gradient Descent, Train & Acc level are removed --> To be found in Old_NN_GA_Architecture_No_RL.py
 
-#Plot data function
-def plotData(data, label_x, label_y, label_pos, label_neg, axes=None):
-    if axes == None:
-        axes = plt.gca()
-    neg = data[:,2] == 0
-    pos = data[:,2] == 1
-    axes.scatter(data[pos][:,0], data[pos][:,1], marker='+', c='k', s=60, linewidth=2, label=label_pos)
-    axes.scatter(data[neg][:,0], data[neg][:,1], c='y', s=60, label=label_neg)
-    axes.set_xlabel(label_x)
-    axes.set_ylabel(label_y)
-    axes.legend(frameon= True, fancybox = True);
+    #Plot data function
+    def plotData(data, label_x, label_y, label_pos, label_neg, axes=None):
+        if axes == None:
+            axes = plt.gca()
+        neg = data[:,2] == 0
+        pos = data[:,2] == 1
+        axes.scatter(data[pos][:,0], data[pos][:,1], marker='+', c='k', s=60, linewidth=2, label=label_pos)
+        axes.scatter(data[neg][:,0], data[neg][:,1], c='y', s=60, label=label_neg)
+        axes.set_xlabel(label_x)
+        axes.set_ylabel(label_y)
+        axes.legend(frameon= True, fancybox = True);
 
 #Initial hyperparameters
 n_epochs = 200
 lr = 0.01
 lr_decay = 0.99
 batch_size = 16
-lossfn = CE_loss
+#lossfn = CE_loss
 activation = relu
 layers = 3
 nodes_b = 150
@@ -164,30 +164,30 @@ nodes_h1 = 50
 
 #Here, we can define different architectures
 class NN_Basic:
-    def __init__(self, X_size, Y_size, lossfn = CE_loss, activation = relu, layers = 3, nodes_b = 150, nodes_h1 = 50, nodes_h2 = 25, nodes_h3 = 10): #<--- nodes_x added for more layers if wanted
+    def __init__(self, X_size, activation = relu, layers = 3, nodes_b = 150, nodes_h1 = 50, nodes_h2 = 25, nodes_h3 = 10): #<--- nodes_x added for more layers if wanted , after X_size Y_size
         # Build the network. Recommended depth: 2-5 layers. Number of nodes: below 200 preferably.
         # Final activation should be softmax, since each datapoint belongs to only one class
         # It should be noted that the actual amount of 'layers' in terms of the amount of nodes is layers+1, as layers describes connnections and not the nodes. --> nodes_b is actually already the first hidden layer.
         self.layers = layers
         self.L_b = layer(X_size, nodes_b, activation)
         if self.layers == 2: #Hard coded because I am not a good coder...
-            self.L_f = layer(nodes_b, Y_size, softmax)
+            self.L_f = layer(nodes_b, softmax)# Y_size, 
 
         elif self.layers == 3:
             self.L_h1 = layer(nodes_b, nodes_h1, activation)
-            self.L_f = layer(nodes_h1, Y_size, softmax)
+            self.L_f = layer(nodes_h1, softmax) #Y_size, 
 
         elif self.layers == 4:
             self.L_h1 = layer(nodes_b, nodes_h1, activation)
             self.L_h2 = layer(nodes_h1, nodes_h2, activation)
-            self.L_f = layer(nodes_h2, Y_size, softmax)
+            self.L_f = layer(nodes_h2,  softmax)#Y_size,
 
         elif self.layers == 5:
             self.L_h1 = layer(nodes_b, nodes_h1, activation)
             self.L_h2 = layer(nodes_h1, nodes_h2, activation)
             self.L_h3 = layer(nodes_h2, nodes_h3, activation)
-            self.L_f = layer(nodes_h3, Y_size, softmax)
-        self.lossfn = lossfn()
+            self.L_f = layer(nodes_h3, softmax) #Y_size, 
+        #self.lossfn = lossfn()
 
     def f_pass(self, X):
         A_b = self.L_b.forward(X)
@@ -212,36 +212,36 @@ class NN_Basic:
         self.H = A_f
         return self.H
 
-    def back_prop(self,X,Y, batch_size):
-        m = batch_size
+    # def back_prop(self,X,Y, batch_size):
+    #     m = batch_size
 
-        #use the model's lossfn's get_loss() to find the loss of the model
-        self.loss = self.lossfn.get_loss(self.H, Y)
+    #     #use the model's lossfn's get_loss() to find the loss of the model
+    #     self.loss = self.lossfn.get_loss(self.H, Y)
 
-        #use the model's lossfn's diff() to find dL_dZ
-        dL_dZ = self.lossfn.diff(self.H, Y)
+    #     #use the model's lossfn's diff() to find dL_dZ
+    #     dL_dZ = self.lossfn.diff(self.H, Y)
 
-        if self.layers == 2:
-            self.L_f.out_grad(dL_dZ, self.L_b.A, m)
-            self.L_b.grad(self.L_f.dZ, self.L_f.W, X, m)
+    #     if self.layers == 2:
+    #         self.L_f.out_grad(dL_dZ, self.L_b.A, m)
+    #         self.L_b.grad(self.L_f.dZ, self.L_f.W, X, m)
 
-        if self.layers == 3:
-            self.L_f.out_grad(dL_dZ, self.L_h1.A, m)
-            self.L_h1.grad(self.L_f.dZ, self.L_f.W, self.L_b.A, m)
+    #     if self.layers == 3:
+    #         self.L_f.out_grad(dL_dZ, self.L_h1.A, m)
+    #         self.L_h1.grad(self.L_f.dZ, self.L_f.W, self.L_b.A, m)
 
-        if self.layers == 4:
-            self.L_f.out_grad(dL_dZ, self.L_h2.A, m)
-            self.L_h2.grad(self.L_f.dZ, self.L_f.W, self.L_h1.A, m)
-            self.L_h1.grad(self.L_h2.dZ, self.L_h2.W, self.L_b.A, m)
+    #     if self.layers == 4:
+    #         self.L_f.out_grad(dL_dZ, self.L_h2.A, m)
+    #         self.L_h2.grad(self.L_f.dZ, self.L_f.W, self.L_h1.A, m)
+    #         self.L_h1.grad(self.L_h2.dZ, self.L_h2.W, self.L_b.A, m)
 
-        if self.layers == 5:
-            self.L_f.out_grad(dL_dZ, self.L_h3.A, m)
-            self.L_h3.grad(self.L_f.dZ, self.L_f.W, self.L_h2.A, m)
-            self.L_h2.grad(self.L_h3.dZ, self.L_h3.W, self.L_h1.A, m)
-            self.L_h1.grad(self.L_h2.dZ, self.L_h2.W, self.L_b.A, m)
+    #     if self.layers == 5:
+    #         self.L_f.out_grad(dL_dZ, self.L_h3.A, m)
+    #         self.L_h3.grad(self.L_f.dZ, self.L_f.W, self.L_h2.A, m)
+    #         self.L_h2.grad(self.L_h3.dZ, self.L_h3.W, self.L_h1.A, m)
+    #         self.L_h1.grad(self.L_h2.dZ, self.L_h2.W, self.L_b.A, m)
 
-        if self.layers >= 3:
-            self.L_b.grad(self.L_h1.dZ, self.L_h1.W, X, m)
+    #     if self.layers >= 3:
+    #         self.L_b.grad(self.L_h1.dZ, self.L_h1.W, X, m)
 
     def optim(self, lr):
         #call each layer's step() to update their respective W and B
@@ -367,17 +367,18 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
     else:
         nodes_h3_i = int(math.ceil(genome[7])) #Ceil is arbitrarely chosen here
 
-    if genome[8] > 200: #Nodes in the first layer, actually being the first true 'hidden' layer already.
-        nodes_b_i = 200
-    elif genome[8] <= 1:
-        nodes_b_i = 1
-    else:
-        nodes_b_i = int(match.ceil(genome[8]))
+    # if genome[8] > 200: #Nodes in the first layer, actually being the first true 'hidden' layer already.
+    #     nodes_b_i = 200
+    # elif genome[8] <= 1:
+    #     nodes_b_i = 1
+    # else:
+    #     nodes_b_i = int(match.ceil(genome[8]))
+    #I assume this is not used anymore
 
     t_0 = time.perf_counter()
     #Debug help:
     #print(activation_i, layers_i, nodes_h1_i, nodes_h2_i, nodes_h3_i)
-    model = NN_Basic(X.shape[0], Y.shape[0], lossfn = !!!, activation = activation_i, layers = layers_i, nodes_b = nodes_b_i, nodes_h1 = nodes_h1_i, nodes_h2 = nodes_h2_i, nodes_h3 = nodes_h3_i)
+    model = NN_Basic(X.shape[0], activation = activation_i, layers = layers_i, nodes_h1 = nodes_h1_i, nodes_h2 = nodes_h2_i, nodes_h3 = nodes_h3_i) #after X.shape[0] Y.shape[0] after layers_i , nodes_b = nodes_b_i,
     fitness_1 = 1 - RL_train() #acc_level(model, X, Y, X_test, Y_test, model_accuracy, n_epochs_i, batch_size_i, lr_i, lr_decay_i) "<--- TO BE ADJUSTED!"
     print(1-fitness_1)
     t_f = time.perf_counter()
@@ -470,8 +471,8 @@ def run(N = 10, gen_length = 8, num_generations = 10, Fitness_function = F):
 #The next step is to add a dataset from the last assignment to see if this NN GA is somewhat efficient, regardless of computation time.
 #A.K.A. Debugging time!
 
-#best_fitness, best_genome, fitness_his = run()
-#print(fitness_his)
+best_fitness, best_genome, fitness_his = run()
+print(fitness_his)
 
 # Two lines below create a new game and start it
 # game = PacmanGame()
