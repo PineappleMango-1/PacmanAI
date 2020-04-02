@@ -55,6 +55,7 @@ class PacmanGame:
         self.prev_index_pinky = [self.offset(self.pinky[0]), self.tiles[self.offset(self.pinky[1])]]
         self.prev_index_clyde = [self.offset(self.clyde[0]), self.tiles[self.offset(self.clyde[1])]]
         self.attempt = 0
+        self.i = 0
 
 
 
@@ -140,9 +141,9 @@ class PacmanGame:
         loc = self.blinky[0]
         course = self.blinky[1]
         col = self.blinky[2]
-        self.tiles[self.prev_index_blinky[0]] = self.prev_index_blinky[1]
-        self.prev_index_blinky[0] = self.offset(loc)
-        self.prev_index_blinky[1] = self.tiles[self.offset(loc)]
+        if self.i%4 == 0:
+            self.tiles[self.prev_index_blinky[0]] = self.prev_index_blinky[1]
+            
         plan = vector(0,0)
         toPac = self.findPac(self.pacman[0], loc)
         if self.valid(loc + toPac, False) and (toPac != -course):
@@ -172,8 +173,11 @@ class PacmanGame:
         self.ghost.up()
         self.ghost.goto(loc.x + 10, loc.y + 10)
         self.ghost.dot(20, col)
-        self.tiles[self.offset(loc)] = 4
-        
+        if self.i%4 == 0:
+            self.prev_index_blinky[0] = self.offset(loc)
+            self.prev_index_blinky[1] = self.tiles[self.offset(loc)]
+            self.tiles[self.offset(loc)] = 4
+        self.i += 1
 
     def moveClyde(self, clyde):
         loc = self.clyde[0]
@@ -355,17 +359,25 @@ class PacmanGame:
                 directions[i] = 11
         output = numpy.append(self.tiles, directions)
         return output
-    # self.window.listen()
+    #self.window.listen()
     # self.window.onkey(lambda: self.run(), 'Right')
     def update(self):
-        #output = get_output()
+        output = self.get_output()
         #this simulates the NN output
-        #get_input(output)
+        self.get_input(output)
         #this uses the NN output to control Pacman
+        index = self.offset(self.pacman[0])
         self.writer.undo()
-        self.writer.write(self.state['score'])
         self.pac.clear()
         self.ghost.clear()
+        if self.tiles[index] == 1:
+            self.tiles[index] = 2
+            self.state['score'] += 1
+            self.score_gained = 1
+            x = (index % 20) * 20 - 200
+            y = 180 - (index // 20) * 20
+            self.square(x, y)
+        self.writer.write(self.state['score'])
         self.tiles[self.prev_index] = 2
         self.prev_index = self.offset(self.pacman[0])
         self.movePacman()
@@ -373,14 +385,7 @@ class PacmanGame:
         self.moveInky(self.inky, self.prev_aim)
         self.moveBlinky(self.blinky)
         self.moveClyde(self.clyde)
-        index = self.offset(self.pacman[0])
-
-        if self.tiles[index] == 1:
-            self.tiles[index] = 2
-            self.state['score'] += 1
-            x = (index % 20) * 20 - 200
-            y = 180 - (index // 20) * 20
-            self.square(x, y)
+        self.score_gained = 0
         self.tiles[index] = 3
         self.pac.up()
         self.pac.goto(self.pacman[0].x + 10, self.pacman[0].y + 10)
@@ -388,9 +393,11 @@ class PacmanGame:
         for point, course, col in self.ghosts:
             if abs(self.pacman[0] - point) < 10:
                 print("you died")
-                return   
-        print(self.get_gameOutput())
-        #self.window.ontimer(self.update, 50)
+                return #done?
+        print(self.prev_index_blinky)
+        print(self.offset(self.blinky[0]))
+        #return self.get_gameOutput(), score_gained #reward
+        self.window.ontimer(self.update, 1000)
 
     def run(self):
         # global attempt
@@ -417,5 +424,5 @@ class PacmanGame:
         
     # self.turtle.done()
 
-# game = PacmanGame()
-# game.run()
+game = PacmanGame()
+game.run()
