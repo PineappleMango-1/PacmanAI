@@ -50,10 +50,10 @@ class PacmanGame:
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ]
         self.prev_index = self.offset(self.pacman[0])
-        self.prev_index_blinky = [self.offset(self.blinky[0]), self.tiles[self.offset(self.blinky[0])]]
-        self.prev_index_inky = [self.offset(self.inky[0]), self.tiles[self.offset(self.inky[0])]]
-        self.prev_index_pinky = [self.offset(self.pinky[0]), self.tiles[self.offset(self.pinky[0])]]
-        self.prev_index_clyde = [self.offset(self.clyde[0]), self.tiles[self.offset(self.clyde[0])]]
+        self.prev_index_blinky = [self.offset(self.blinky[0]), self.tiles[self.offset(self.blinky[0])], self.offset(self.blinky[0])]
+        self.prev_index_inky = [self.offset(self.inky[0]), self.tiles[self.offset(self.inky[0])], self.offset(self.inky[0])]
+        self.prev_index_pinky = [self.offset(self.pinky[0]), self.tiles[self.offset(self.pinky[0])], self.offset(self.pinky[0])]
+        self.prev_index_clyde = [self.offset(self.clyde[0]), self.tiles[self.offset(self.clyde[0])], self.offset(self.clyde[0])]
         self.attempt = 0
         self.i = 0
         self.j = 0
@@ -143,6 +143,7 @@ class PacmanGame:
         col = self.blinky[2]
         plan = vector(0,0)
         toPac = self.findPac(self.pacman[0], loc)
+        self.prev_index_blinky[2] = loc
         if self.valid(loc + toPac, False) and (toPac != -course):
             course.x = toPac.x
             course.y = toPac.y
@@ -181,9 +182,7 @@ class PacmanGame:
         loc = self.clyde[0]
         course = self.clyde[1]
         col = self.clyde[2]
-        self.tiles[self.prev_index_clyde[0]] = self.prev_index_clyde[1]
-        self.prev_index_clyde[0] = self.offset(loc)
-        self.prev_index_clyde[1] = self.tiles[self.offset(loc)]
+        self.prev_index_clyde[2] = loc
         if abs(self.pacman[0] - loc) > 500:
             self.chase = True
             return
@@ -232,9 +231,7 @@ class PacmanGame:
         loc = self.pinky[0]
         course = self.pinky[1]
         col = self.pinky[2]
-        self.tiles[self.prev_index_pinky[0]] = self.prev_index_pinky[1]
-        self.prev_index_pinky[0] = self.offset(loc)
-        self.prev_index_pinky[1] = self.tiles[self.offset(loc)]
+        self.prev_index_pinky[2] = loc
         goal = self.findPac(self.pacman[0] + 10*pacAim, loc)
         if self.valid(loc + goal, False) and (goal != -course):
             course.x = goal.x
@@ -274,9 +271,7 @@ class PacmanGame:
         loc = inky[0]
         course = inky[1]
         col = inky[2]
-        self.tiles[self.prev_index_inky[0]] = self.prev_index_inky[1]
-        self.prev_index_inky[0] = self.offset(loc)
-        self.prev_index_inky[1] = self.tiles[self.offset(loc)]
+        self.prev_index_inky[2] = loc
         goalTile = self.blinky[0] + ((self.pacman[0] + 2*pacAim) - self.blinky[0]) * 2
         goal = self.findPac(goalTile, loc)
         if self.valid(loc + goal, False) and (goal != -course):
@@ -403,19 +398,19 @@ class PacmanGame:
                 print("you died")
                 self.done = True
                 self.reward = -100
-            if self.pacman[0] == self.prev_index_blinky[0] and self.blinky[0] == self.prev_index:
+            if self.pacman[0] == self.prev_index_blinky[2] and self.blinky[0] == self.prev_index:
                 print("you died")
                 self.done = True
                 self.reward = -100
-            if self.pacman[0] == self.prev_index_inky[0] and self.inky[0] == self.prev_index:
+            if self.pacman[0] == self.prev_index_inky[2] and self.inky[0] == self.prev_index:
                 print("you died")
                 self.done = True
                 self.reward = -100
-            if self.pacman[0] == self.prev_index_pinky[0] and self.pinky[0] == self.prev_index:
+            if self.pacman[0] == self.prev_index_pinky[2] and self.pinky[0] == self.prev_index:
                 print("you died")
                 self.done = True
                 self.reward = -100
-            if self.pacman[0] == self.prev_index_clyde[0] and self.clyde[0] == self.prev_index:
+            if self.pacman[0] == self.prev_index_clyde[2] and self.clyde[0] == self.prev_index:
                 print("you died")
                 self.done = True
                 self.reward = -100        
