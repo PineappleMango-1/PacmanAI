@@ -57,6 +57,7 @@ class PacmanGame:
         self.attempt = 0
         self.i = 0
         self.j = 0
+        
 
 
 
@@ -363,11 +364,11 @@ class PacmanGame:
         return output
     #self.window.listen()
     # self.window.onkey(lambda: self.run(), 'Right')
-    def update(self):
-        output = self.get_output()
+    def update(self, input):
+        #output = self.get_output()
         #this simulates the NN output
         self.done = False
-        self.get_input(output)
+        self.get_input(input)
         self.reward = -0.1
         #this uses the NN output to control Pacman
         index = self.offset(self.pacman[0])
@@ -427,14 +428,13 @@ class PacmanGame:
         if self.state['score'] == 159:
             self.done = True
             self.reward = 100
-        #return self.get_gameOutput(), self.reward #reward
-        self.window.ontimer(self.update, 1000)
+        return self.get_gameOutput(), self.reward, self.done
+        #self.window.ontimer(self.update, 1000)
 
     def run(self):
         # global attempt
 
-        self.attempt = 0
-        self.window.setup(420, 420, 370, 0)
+        
         self.pac.hideturtle()
         self.ghost.hideturtle()
         self.writer.up()
@@ -447,7 +447,7 @@ class PacmanGame:
         #window.onkey(lambda: change(0, 5), 'Up')
         self.window.onkey(lambda: self.turn_around(self.prev_aim), 'Down')
         self.world()
-        self.update()
+        #self.update()
         turtle.done()
 
         
@@ -455,5 +455,5 @@ class PacmanGame:
         
     # self.turtle.done()
 
-game = PacmanGame()
-game.run()
+#game = PacmanGame()
+#game.run()
