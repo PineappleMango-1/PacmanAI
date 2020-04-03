@@ -57,6 +57,14 @@ class PacmanGame:
         self.attempt = 0
         self.i = 0
         self.j = 0
+        self.pac.hideturtle()
+        self.ghost.hideturtle()
+        self.writer.up()
+        self.window.tracer(False)
+        self.writer.goto(160, 160)
+        self.writer.color('white')
+        self.writer.write(self.state['score'])
+        self.world()
         
 
 
