@@ -13,7 +13,7 @@ NN_output_size = 3 #Number of inputs for the game (left, right, turn around).
 class Q_learning:
     #Creating the models
     def __init__(self, gamma_ = 0.9, epsilon_ = 1, epsilon_decay_ = 0.995, epsilon_min_ = 0.01, lr_ = 1, tau_ = 0.1, layers_ = 3, nodes_b_ = 50, nodes_h1_ = 40, nodes_h2_ = 30, nodes_h3_ = 20, activation_ = "relu", loss_ = "mean_squared_error"):
-        self.memory = deque(maxlen = 2000) #Make an empty deque to store information, which is a list-like datatype that can append data faster than a normal list. Maxlen as a failsafe.
+        self.memory = deque(maxlen = 20000) #Make an empty deque to store information, which is a list-like datatype that can append data faster than a normal list. Maxlen as a failsafe.
         #Hyperparameters, to be tweaked by GA when initialising a NN with its unique 'i' hyperparameters.
         self.gamma = gamma_ #Discount factor. Every reward gets multiplied by gamma after each step, lowering the importance of initial reward.
         self.epsilon = epsilon_ #'Random' factor. The higher this value, the more not random choices are made (more reliant on the NN's weights and biases).
@@ -42,7 +42,6 @@ class Q_learning:
         #Like Stochastic Gradient Descent (SGD), Adam is a optimization algorithm to optimize the policy of this NN. Unlike SGD, Adam is able to optimize the NN based on iterative based training data (--> no need for historical, labelled data).
         #The loss can be chosen from the Keras set by the GA, but is chosen as mean_squared_error (most straightforward) for now.
         return(model)
-    #NOTE TO SELF: Do not forget to change activation_i in Fitness_function of GA (Incorporate string usage).
 
     #Saving information of a run:
     def remember(self, state, action, reward, new_state, done):
@@ -60,7 +59,7 @@ class Q_learning:
             if done: #If the Learning process is finished / converged, is the future reward is equal to the next step.
                 target[0][action] = reward #Direct reward that is given with these actions
             else:
-                Q_future = max(self.target_model.predict(new_state)[0]) #Cummulative future rewards
+                Q_future = max(self.target_model.predict(new_state) [0]) #Cummulative future rewards
                 target[0][action] = reward + Q_future * self.gamma #The target of the self.model is to get the best current reward combined with all expected future rewards, multiplied by gamma.
             self.model.fit(state, target, epochs=5, verbose=1) #Trains the number for a given amount of epochs #verbose = 1 shows a progress bar of how far you are with regards to the total amount of epochs 
     
@@ -82,24 +81,27 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
     gamma = gamma_r
     epsilon = epsilon_r
 
-    trails = 100
-    trail_len = 500
+    trails = 40
+    trail_len = 5000
 
     network = Q_learning(gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
-    #steps = []
+    rewards_his = []
     for trail in range(trails):
         cur_state = game.get_gameOutput() #Grabs the environment from the last frame and one-hot encodes it into input for the NN, with 12 possible classes for each entry.
+        rewards = 0 #The cummulative score for a specific game
         for step in range(trial_len):
             action = network.act(cur_state) #Create an action to take
             new_state, reward, done = game.update(action) #TO BE LOOKED INTO, correct outputs have to be given.
-
+            rewards += reward
             network.remember(cur_state, action, reward, new_state, done) #Remember all these parameters, to learn later.
-            network.replay(batch_size = batch_size_r) #Replay with a batch from the memory.
+            network.replay(batch_size = batch_size_r) #Replay with a batch from the memory, updating the model every sample of the batch_size.
             network.target_train() #Train the target function once.
 
             cur_state = new_state
             if done:
-                break #Return final reward score? This way we can use it in the GA to get the fitness function rather quickly.
+                final_score = rewards
+                rewards_his.append(final_score)
+    return(rewards_his)
 
 
 ###The Genetic Algorithm
@@ -232,11 +234,11 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
 
     #Now that all hyperparameters are entered, it is time to actually start the fitness function.
     t_0 = time.perf_counter()
-    #reward = main(gamma_r = gamma_i, epsilon_r = epsilon_i, epsilon_decay_r = epsilon_decay_i, epsilon_min_r = epsilon_min_i, lr_r = lr_i, tau_r = tau_i, layers_r = layers_i, nodes_b_r = nodes_b_i, nodes_h1_r = nodes_h1_i, nodes_h2_r = nodes_h2_i, nodes_h3_r = nodes_h3_i, activation_r = activation_i, loss_r = loss_i, batch_size_r = batch_size_i)
-    #fitness_1 = 1/reward.
+    main(gamma_r = gamma_i, epsilon_r = epsilon_i, epsilon_decay_r = epsilon_decay_i, epsilon_min_r = epsilon_min_i, lr_r = lr_i, tau_r = tau_i, layers_r = layers_i, nodes_b_r = nodes_b_i, nodes_h1_r = nodes_h1_i, nodes_h2_r = nodes_h2_i, nodes_h3_r = nodes_h3_i, activation_r = activation_i, loss_r = loss_i, batch_size_r = batch_size_i)
+    fitness_1 = rewards_his[trails-1]
     t_f = time.perf_counter()
     Delta_t = (t_f - t_0) * 0.01 #Penalty to equalise points with training time's influence (it should be heavily penalised if calculations take too long, since it would slow down the training of all of the NNs significantly if they all take a lot of time).
-    fitness = fitness_1 + Delta_t
+    fitness = fitness_1 - Delta_t
     return(fitness)
 
 def cross(A, B):
