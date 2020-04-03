@@ -12,32 +12,31 @@ NN_output_size = 3 #Number of inputs for the game (left, right, turn around).
 
 class Q_learning:
     #Creating the models
-    def __init__(self, game, gamma = 0.9, epsilon = 1, epsilon_decay = 0.995, epsilon_min = 0.01, lr = 1, tau = 0.1):
-        self.env = game
-        self.memory = deque(maxlen = 2000) #Make an empty deque to store information, which is a list-like datatype that can append data faster than a normal list.
-        #Hyperparameters, to be tweaked by GA.
-        self.gamma = gamma #Discount factor. Every reward gets multiplied by gamma after each step, lowering the importance of initial reward.
-        self.epsilon = epsilon #'Random' factor. The higher this value, the more not random choices are made (more reliant on the NN's weights and biases).
-        self.epsilon_decay = epsilon_decay #Factor with which epsilon lowers after every step. This way, the NN is 'trusted' more and more as it has more training data.
-        self.epsilon_min = epsilon_min #Lowest value of epsilon, to ensure the NN still takes a random step sometimes, as it might accidently find a better policy --> helps against falling into local optima.
-        self.lr =  lr #How big is the step we take in teh direction of current reward.
-        self.tau = tau #Parameter to ensure that the step taken is not too big --> How much are we taking the last policy update into account?
+    def __init__(self, gamma_ = 0.9, epsilon_ = 1, epsilon_decay_ = 0.995, epsilon_min_ = 0.01, lr_ = 1, tau_ = 0.1, layers_ = 3, nodes_b_ = 50, nodes_h1_ = 40, nodes_h2_ = 30, nodes_h3_ = 20, activation_ = "relu", loss_ = "mean_squared_error"):
+        self.memory = deque(maxlen = 2000) #Make an empty deque to store information, which is a list-like datatype that can append data faster than a normal list. Maxlen as a failsafe.
+        #Hyperparameters, to be tweaked by GA when initialising a NN with its unique 'i' hyperparameters.
+        self.gamma = gamma_ #Discount factor. Every reward gets multiplied by gamma after each step, lowering the importance of initial reward.
+        self.epsilon = epsilon_ #'Random' factor. The higher this value, the more not random choices are made (more reliant on the NN's weights and biases).
+        self.epsilon_decay = epsilon_decay_ #Factor with which epsilon lowers after every step. This way, the NN is 'trusted' more and more as it has more training data.
+        self.epsilon_min = epsilon_min_ #Lowest value of epsilon, to ensure the NN still takes a random step sometimes, as it might accidently find a better policy --> helps against falling into local optima.
+        self.lr =  lr_ #How big is the step we take in teh direction of current reward.
+        self.tau = tau_ #Parameter to ensure that the step taken is not too big --> How much are we taking the last policy update into account?
         
         #NOTE: two models are created here, as DeepMind has proven this leads to quicker convergence in complex environments.
         #Where self.model keeps changing its 'ideal policy' with each iteration (where is my next food pallet?), target_model keeps the 'end goal' in sight (highest eventual score).
-        self.model = self.create_model(layers = layers_i, nodes_b = nodes_b_i, nodes_h1 = nodes_h1_i, nodes_h2 = nodes_h2_i, nodes_h3 = nodes_h3_i, activation = activation_i, loss = loss_i)
-        self.target_model = self.create_model()
+        self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation = activation_, loss = loss_)
+        self.target_model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation = activation_, loss = loss_)
 
     def create_model(self, layers = 3, nodes_b = 50, nodes_h1 = 40, nodes_h2 = 30, nodes_h3 = 20, activation_ = "relu", loss_ = "mean_squared_error"):
         model = Sequential() #Using the Built-in 'Sequential' architecture --> layer for layer in sequential order from input to output.
         #Now adding layers:
-        model.add(Dense(nodes_b, input_shape=(X.shape), activation = activation_)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation)
+        model.add(Dense(nodes_b, input_shape=(X.shape), activation = activation_)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
         if layers >= 3:
-            model.add(Dense(nodes_h1_i, activation = activation_)) #After the initial layer, the amount of inputs does not need to be specified.
+            model.add(Dense(nodes_h1, activation = activation_)) #After the initial layer, the amount of inputs does not need to be specified.
         if layers >= 4:
-            model.add(Dense(nodes_h2_i, activation = activation_))
+            model.add(Dense(nodes_h2, activation = activation_))
         if layers >= 5:
-            model.add(Dense(nodes_h3_i, activation = activation_))
+            model.add(Dense(nodes_h3, activation = activation_))
         model.add(Dense(NN_output_size, activation = "softmax"))) #Since we want the NN to output a probability, softmax is used in the final layer.
         model.compile(loss = loss_, optimizer = Adam(lr = self.lr))
         #Like Stochastic Gradient Descent (SGD), Adam is a optimization algorithm to optimize the policy of this NN. Unlike SGD, Adam is able to optimize the NN based on iterative based training data (--> no need for historical, labelled data).
@@ -50,8 +49,7 @@ class Q_learning:
         self.memory.append([state, action, reward, new_state, done]) #For each iteration, add to the memory what action has been taken in which environment (state), what reward has been given and what the new state is.
     
     #Training the Neural Network:
-    def replay(self, batch_size = batch_size_i):
-        batch_size = batch_size_i
+    def replay(self, batch_size = batch_size_):
         if len(self.memory) < batch_size: #We can not use a batch size bigger than the amount of entries in the memory. So, first we create a memory of this length without learning.
             return
 
@@ -80,14 +78,14 @@ class Q_learning:
             return np.random.randint(0,4) #Take a random integer, representing either doign nothing, turning left, right, or turn around.
         return np.argmax(self.model.predict(state) [0])
 
-def main(gamma_i = 0.9, epsilon_i = 1, epsilon_decay_i = 0.995, epsilon_min_i = 0.01, lr_i = 1, tau_i = 0.1, layers_i = 3, nodes_b_i = 50, nodes_h1_i = 40, nodes_h2_i = 30, nodes_h3_i = 20, activation_i = "relu", loss_i = "mean_squared_error", batch_size_i = 32): #Integrate all hyperparameters into relevant functions.
-    gamma = gamma_i
-    epsilon = epsilon_min_i
+def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 32): #Integrate all hyperparameters into relevant functions.
+    gamma = gamma_r
+    epsilon = epsilon_r
 
     trails = 100
     trail_len = 500
 
-    network = Q_learning(gamma = gamma_i, epsilon = epsilon_i , epsilon_decay = epsilon_decay_i, epsilon_min = epsilon_min_i, lr = lr_i, tau = tau_i)
+    network = Q_learning(gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
     #steps = []
     for trail in range(trails):
         cur_state = game.get_gameOutput() #Grabs the environment from the last frame and one-hot encodes it into input for the NN, with 12 possible classes for each entry.
@@ -96,13 +94,12 @@ def main(gamma_i = 0.9, epsilon_i = 1, epsilon_decay_i = 0.995, epsilon_min_i = 
             new_state, reward, done = game.update(action) #TO BE LOOKED INTO, correct outputs have to be given.
 
             network.remember(cur_state, action, reward, new_state, done) #Remember all these parameters, to learn later.
-            network.replay(batch_size = batch_size_i) #Replay with a batch from the memory.
+            network.replay(batch_size = batch_size_r) #Replay with a batch from the memory.
             network.target_train() #Train the target function once.
 
             cur_state = new_state
             if done:
-                break
-main() #Run the programme.
+                break #Return final reward score? This way we can use it in the GA to get the fitness function rather quickly.
 
 
 ###The Genetic Algorithm
@@ -112,6 +109,21 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
     #n_epochs_i = int(math.ceil(genome[0])) ##Needs to be a whole number number that is not 0 --> integer & ceiling. Currently not used, due to Elena's advise.
     
     #Pairs genome to actual hyperparameters. Given the initialisation between 0 and 100 for each genome entry, the code below makes it likely for the GA to pick 'sweet-spot values' of hyperparameters between 0 and 1. --> Faster convergence.
+    #A quick summary of what genome entry rules over which hyperparameter:
+    #genome[0] = gamma
+    #genome[1] = epsilon
+    #genome[2] = epsilon_decay
+    #genome[3] = epsilon_min
+    #genome[4] = learning rate (lr)
+    #genome[5] = tau
+    #genome[6] = batch_size
+    #genome[7] = activation (function)
+    #genome[8] = loss (function)
+    #genome[9] = amount of layers
+    #genome[10] = amount of nodes in hidden second layer
+    #genome[11] = amount of nodes in hidden third layer
+    #genome[12] = amount of nodes in hidden fourth layer
+    #genome[13] = amount of nodes in hidden first layer (after input)
     if genome[0] >= 1: #Value of gamma
         gamma_i = genome[1]/100
     elif genome[0] <= 0:
@@ -177,7 +189,7 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
         elif 100/(loss_list.size/i)< genome[8] <= 100/(loss_list.size/i+1):
             loss_i = loss_list[i]
         else:
-            loss_i = "mean_squared_error" #Safeguard if genome[8] > 100. I do not have a good understanding of loss function, so I the first one I saw (--> arbitrary).
+            loss_i = "mean_squared_error" #Safeguard if genome[8] > 100. I do not have a good understanding of loss functions, so I took the first one I saw (--> arbitrary).
 
 
     #Number of total layers, which has a hard-coded max of 5 layers. Higher numbers will result in 5 layers to be created.
@@ -195,33 +207,33 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
     elif genome[10] <= 1:
         nodes_h1_i = 1
     else:
-        nodes_h1_i = int(math.ceil(genome[5])) #Ceil is arbitrarely chosen here
+        nodes_h1_i = int(math.ceil(genome[10])) #Ceil is arbitrarely chosen here
 
     if genome[11] > 200: #Nodes in second hidden layer
         nodes_h2_i = 200
     elif genome[11] <= 1:
         nodes_h2_i = 1
     else:
-        nodes_h2_i = int(math.ceil(genome[6])) #Ceil is arbitrarely chosen here
+        nodes_h2_i = int(math.ceil(genome[11])) #Ceil is arbitrarely chosen here
 
     if genome[12] > 200: #Nodes in third hidden layer
         nodes_h3_i = 200
     elif genome[12] <= 1:
         nodes_h3_i = 1
     else:
-        nodes_h3_i = int(math.ceil(genome[7])) #Ceil is arbitrarely chosen here
+        nodes_h3_i = int(math.ceil(genome[12])) #Ceil is arbitrarely chosen here
 
     if genome[13] > 200: #Nodes in the first layer, actually being the first true 'hidden' layer already.
         nodes_b_i = 200
     elif genome[13] <= 1:
         nodes_b_i = 1
     else:
-        nodes_b_i = int(match.ceil(genome[8]))
+        nodes_b_i = int(match.ceil(genome[13]))
 
     #Now that all hyperparameters are entered, it is time to actually start the fitness function.
     t_0 = time.perf_counter()
-    #INITIALISE MODEL
-    #TRAIN FUNCTION. OUTPUT = 1/REWARD (--> Higher reward --> closer to 0 --> minimize fitness function)
+    #reward = main(gamma_r = gamma_i, epsilon_r = epsilon_i, epsilon_decay_r = epsilon_decay_i, epsilon_min_r = epsilon_min_i, lr_r = lr_i, tau_r = tau_i, layers_r = layers_i, nodes_b_r = nodes_b_i, nodes_h1_r = nodes_h1_i, nodes_h2_r = nodes_h2_i, nodes_h3_r = nodes_h3_i, activation_r = activation_i, loss_r = loss_i, batch_size_r = batch_size_i)
+    #fitness_1 = 1/reward.
     t_f = time.perf_counter()
     Delta_t = (t_f - t_0) * 0.01 #Penalty to equalise points with training time's influence (it should be heavily penalised if calculations take too long, since it would slow down the training of all of the NNs significantly if they all take a lot of time).
     fitness = fitness_1 + Delta_t
@@ -272,7 +284,7 @@ def cross_and_mutate(pop, pop_size):
         mutate(offspring[i])
     return offspring
 
-def run(N = 10, gen_length = 14, num_generations = 10, Fitness_function = F):
+def run(N = 14, gen_length = 14, num_generations = 10, Fitness_function = F):
     size_population = 4 * N #the actual amount of individuals
     pop_size = (size_population, gen_length) #The entire population, described in terms of its population size and the amount of alleles per individual.
     new_population = np.ndarray((pop_size)) #Generate gen 0, with random values for each allele between 0 and 100. <--- ARBITRARY VALUES, FEEL FREE TO TWEAK!
