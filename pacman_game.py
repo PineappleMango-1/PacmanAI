@@ -50,13 +50,13 @@ class PacmanGame:
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ]
         self.prev_index = self.offset(self.pacman[0])
-        self.prev_index_blinky = [self.offset(self.blinky[0]), self.tiles[self.offset(self.blinky[1])]]
-        self.prev_index_inky = [self.offset(self.inky[0]), self.tiles[self.offset(self.inky[1])]]
-        self.prev_index_pinky = [self.offset(self.pinky[0]), self.tiles[self.offset(self.pinky[1])]]
-        self.prev_index_clyde = [self.offset(self.clyde[0]), self.tiles[self.offset(self.clyde[1])]]
+        self.prev_index_blinky = [self.offset(self.blinky[0]), self.tiles[self.offset(self.blinky[0])]]
+        self.prev_index_inky = [self.offset(self.inky[0]), self.tiles[self.offset(self.inky[0])]]
+        self.prev_index_pinky = [self.offset(self.pinky[0]), self.tiles[self.offset(self.pinky[0])]]
+        self.prev_index_clyde = [self.offset(self.clyde[0]), self.tiles[self.offset(self.clyde[0])]]
         self.attempt = 0
         self.i = 0
-
+        self.j = 0
 
 
 
@@ -186,7 +186,6 @@ class PacmanGame:
         self.tiles[self.prev_index_clyde[0]] = self.prev_index_clyde[1]
         self.prev_index_clyde[0] = self.offset(loc)
         self.prev_index_clyde[1] = self.tiles[self.offset(loc)]
-        # global chase
         if abs(self.pacman[0] - loc) > 500:
             self.chase = True
             return
@@ -333,18 +332,16 @@ class PacmanGame:
     def get_input(self, NN_output):
         #to be used with the NN
         # global prev_aim
-        if NN_output[0] == 1:
+        if NN_output == 0:
             self.left(self.prev_aim)
-        elif NN_output[1] == 1:
+        elif NN_output == 1:
             self.right(self.prev_aim)
-        elif NN_output[2] == 1:
+        elif NN_output == 2:
             self.turn_around(self.prev_aim)
 
     def get_output(self):
         #dummy function to replicate NN output
-        output = [0,0,0,0]
-        choice = numpy.random.randint(4)
-        output[choice] = 1
+        output = numpy.random.randint(4)
         return output
     def get_gameOutput(self):
         directions = numpy.zeros(4)
@@ -364,7 +361,9 @@ class PacmanGame:
     def update(self):
         output = self.get_output()
         #this simulates the NN output
+        self.done = False
         self.get_input(output)
+        self.reward = -0.1
         #this uses the NN output to control Pacman
         index = self.offset(self.pacman[0])
         self.writer.undo()
@@ -373,7 +372,7 @@ class PacmanGame:
         if self.tiles[index] == 1:
             self.tiles[index] = 2
             self.state['score'] += 1
-            self.score_gained = 1
+            self.reward = 1
             x = (index % 20) * 20 - 200
             y = 180 - (index // 20) * 20
             self.square(x, y)
@@ -385,7 +384,6 @@ class PacmanGame:
         self.moveInky(self.inky, self.prev_aim)
         self.moveBlinky(self.blinky)
         self.moveClyde(self.clyde)
-        self.score_gained = 0
         self.tiles[index] = 3
         self.pac.up()
         self.pac.goto(self.pacman[0].x + 10, self.pacman[0].y + 10)
@@ -393,10 +391,14 @@ class PacmanGame:
         for point, course, col in self.ghosts:
             if abs(self.pacman[0] - point) < 10:
                 print("you died")
-                return #done?
+                self.done = True
+                self.reward = -100
+        if self.state['score'] == 159:
+            self.done = True
+            self.reward = 100
         print(self.prev_index_blinky)
         print(self.offset(self.blinky[0]))
-        #return self.get_gameOutput(), score_gained #reward
+        #return self.get_gameOutput(), self.reward #reward
         self.window.ontimer(self.update, 1000)
 
     def run(self):
