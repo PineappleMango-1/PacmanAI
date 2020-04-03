@@ -143,7 +143,7 @@ class PacmanGame:
         col = self.blinky[2]
         plan = vector(0,0)
         toPac = self.findPac(self.pacman[0], loc)
-        self.prev_index_blinky[2] = loc
+        self.prev_index_blinky[2] = self.offset(loc)
         if self.valid(loc + toPac, False) and (toPac != -course):
             course.x = toPac.x
             course.y = toPac.y
@@ -182,7 +182,7 @@ class PacmanGame:
         loc = self.clyde[0]
         course = self.clyde[1]
         col = self.clyde[2]
-        self.prev_index_clyde[2] = loc
+        self.prev_index_clyde[2] = self.offset(loc)
         if abs(self.pacman[0] - loc) > 500:
             self.chase = True
             return
@@ -231,7 +231,7 @@ class PacmanGame:
         loc = self.pinky[0]
         course = self.pinky[1]
         col = self.pinky[2]
-        self.prev_index_pinky[2] = loc
+        self.prev_index_pinky[2] = self.offset(loc)
         goal = self.findPac(self.pacman[0] + 10*pacAim, loc)
         if self.valid(loc + goal, False) and (goal != -course):
             course.x = goal.x
@@ -271,7 +271,7 @@ class PacmanGame:
         loc = inky[0]
         course = inky[1]
         col = inky[2]
-        self.prev_index_inky[2] = loc
+        self.prev_index_inky[2] = self.offset(loc)
         goalTile = self.blinky[0] + ((self.pacman[0] + 2*pacAim) - self.blinky[0]) * 2
         goal = self.findPac(goalTile, loc)
         if self.valid(loc + goal, False) and (goal != -course):
@@ -393,32 +393,36 @@ class PacmanGame:
         self.pac.up()
         self.pac.goto(self.pacman[0].x + 10, self.pacman[0].y + 10)
         self.pac.dot(20, 'yellow')
+        print("update")
+        print("pacman:", self.prev_index)
+        print("blinky:" , self.prev_index_blinky[2])
+        print("inky:" , self.prev_index_inky[2])
+        print("pinky:" , self.prev_index_pinky[2])
+        print("clyde:" , self.prev_index_clyde[2])
         for point, course, col in self.ghosts:
             if abs(point - self.pacman[0]) < 10:
                 print("you died")
                 self.done = True
                 self.reward = -100
-            if self.pacman[0] == self.prev_index_blinky[2] and self.blinky[0] == self.prev_index:
+            if index == self.prev_index_blinky[2] and self.prev_index_blinky[0] == self.prev_index:
                 print("you died")
                 self.done = True
                 self.reward = -100
-            if self.pacman[0] == self.prev_index_inky[2] and self.inky[0] == self.prev_index:
+            if index == self.prev_index_inky[2] and self.prev_index_inky[0] == self.prev_index:
                 print("you died")
                 self.done = True
                 self.reward = -100
-            if self.pacman[0] == self.prev_index_pinky[2] and self.pinky[0] == self.prev_index:
+            if index == self.prev_index_pinky[2] and self.prev_index_pinky[0] == self.prev_index:
                 print("you died")
                 self.done = True
                 self.reward = -100
-            if self.pacman[0] == self.prev_index_clyde[2] and self.clyde[0] == self.prev_index:
+            if index == self.prev_index_clyde[2] and self.clyde[0] == self.prev_index:
                 print("you died")
                 self.done = True
                 self.reward = -100        
         if self.state['score'] == 159:
             self.done = True
             self.reward = 100
-        print(self.prev_index_blinky)
-        print(self.offset(self.blinky[0]))
         #return self.get_gameOutput(), self.reward #reward
         self.window.ontimer(self.update, 1000)
 
