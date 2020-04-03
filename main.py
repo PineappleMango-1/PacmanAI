@@ -194,7 +194,7 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
 
     #Number of total layers, which has a hard-coded max of 5 layers. Higher numbers will result in 5 layers to be created.
     layers_i = 2 #in- and output layer.
-    if genome[9] > 25
+    if genome[9] > 25:
         layers_i += 1
     if genome[9] > 50:
         layers_i += 1
