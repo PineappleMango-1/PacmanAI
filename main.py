@@ -7,8 +7,11 @@ import random
 from collections import deque
 from pacman_game import PacmanGame
 
+#Be sure to have installed keras, tensorflow, numpy and random libraries!
+
 game = PacmanGame() #initialising PacmanGame
-NN_output_size = 4 #Number of inputs for the game (left, right, turn around).
+NN_output_size = 4  #Number of inputs for the game (left, right, turn around)
+NN_input_shape = (404,) #Size of the state inputted by the game
 
 class Q_learning:
     #Creating the models
@@ -26,11 +29,11 @@ class Q_learning:
         #Where self.model keeps changing its 'ideal policy' with each iteration (where is my next food pallet?), target_model keeps the 'end goal' in sight (highest eventual score).
         self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation = activation_, loss = loss_)
         self.target_model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation = activation_, loss = loss_)
-
-    def create_model(self, layers = 3, nodes_b = 50, nodes_h1 = 40, nodes_h2 = 30, nodes_h3 = 20, activation_ = "relu", loss_ = "mean_squared_error"):
+ 
+    def create_model(self, layers = 3, nodes_b = 50, nodes_h1 = 40, nodes_h2 = 30, nodes_h3 = 20, activation = "relu", loss = "mean_squared_error"):
         model = Sequential() #Using the Built-in 'Sequential' architecture --> layer for layer in sequential order from input to output.
         #Now adding layers:
-        model.add(Dense(nodes_b, input_shape=(X.shape), activation = activation_)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
+        model.add(Dense(nodes_b, input_shape=(NN_input_shape), activation = activation_)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
         if layers >= 3:
             model.add(Dense(nodes_h1, activation = activation_)) #After the initial layer, the amount of inputs does not need to be specified.
         if layers >= 4:
@@ -48,7 +51,7 @@ class Q_learning:
         self.memory.append([state, action, reward, new_state, done]) #For each iteration, add to the memory what action has been taken in which environment (state), what reward has been given and what the new state is.
     
     #Training the Neural Network:
-    def replay(self, batch_size = batch_size_):
+    def replay(self, batch_size = 32):
         if len(self.memory) < batch_size: #We can not use a batch size bigger than the amount of entries in the memory. So, first we create a memory of this length without learning.
             return
 
@@ -103,6 +106,9 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
                 rewards_his.append(final_score)
     return(rewards_his, final_score) #if final_score doesn't work, return rewards_his[-1]
 
+
+#Testing if the DQN works:
+main(gamma_r = 0.85, epsilon_r = 1.0, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.005, tau_r = 0.125, layers_r = 5, nodes_b_r = 80, nodes_h1_r = 40, nodes_h2_r = 20, nodes_h3_r = 10, activation_r = "relu", loss_r = "crossentropy", batch_size_r = 32)
 
 ###The Genetic Algorithm
 #For this project, the gen_length of the 'organisms' is equal to the amount of hyperparameters that have been indicated with 'hyperparameter_i' in the code, being 
