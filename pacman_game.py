@@ -407,6 +407,18 @@ class PacmanGame:
                 print("you died")
                 self.done = True
                 self.reward = -100
+            if self.pacman[0] == self.prev_index_inky[0] and self.inky[0] == self.prev_index:
+                print("you died")
+                self.done = True
+                self.reward = -100
+            if self.pacman[0] == self.prev_index_pinky[0] and self.pinky[0] == self.prev_index:
+                print("you died")
+                self.done = True
+                self.reward = -100
+            if self.pacman[0] == self.prev_index_clyde[0] and self.clyde[0] == self.prev_index:
+                print("you died")
+                self.done = True
+                self.reward = -100        
         if self.state['score'] == 159:
             self.done = True
             self.reward = 100
