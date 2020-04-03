@@ -37,7 +37,7 @@ class Q_learning:
             model.add(Dense(nodes_h2, activation = activation_))
         if layers >= 5:
             model.add(Dense(nodes_h3, activation = activation_))
-        model.add(Dense(NN_output_size, activation = "softmax"))) #Since we want the NN to output a probability, softmax is used in the final layer.
+        model.add(Dense(NN_output_size, activation = "softmax")) #Since we want the NN to output a probability, softmax is used in the final layer.
         model.compile(loss = loss_, optimizer = Adam(lr = self.lr))
         #Like Stochastic Gradient Descent (SGD), Adam is a optimization algorithm to optimize the policy of this NN. Unlike SGD, Adam is able to optimize the NN based on iterative based training data (--> no need for historical, labelled data).
         #The loss can be chosen from the Keras set by the GA, but is chosen as mean_squared_error (most straightforward) for now.
