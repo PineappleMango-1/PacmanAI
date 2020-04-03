@@ -4,10 +4,12 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 import numpy as np
 import random
+import math
+import time
 from collections import deque
 from pacman_game import PacmanGame
 
-#Be sure to have installed keras, tensorflow, numpy and random libraries!
+#Be sure to have installed all the libraries stated above, and tensorflow!
 
 game = PacmanGame() #initialising PacmanGame
 NN_output_size = 4  #Number of inputs for the game (left, right, turn around)
@@ -27,21 +29,21 @@ class Q_learning:
         
         #NOTE: two models are created here, as DeepMind has proven this leads to quicker convergence in complex environments.
         #Where self.model keeps changing its 'ideal policy' with each iteration (where is my next food pallet?), target_model keeps the 'end goal' in sight (highest eventual score).
-        self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation = activation_, loss = loss_)
-        self.target_model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation = activation_, loss = loss_)
+        self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
+        self.target_model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
  
-    def create_model(self, layers = 3, nodes_b = 50, nodes_h1 = 40, nodes_h2 = 30, nodes_h3 = 20, activation = "relu", loss = "mean_squared_error"):
+    def create_model(self, layers = 3, nodes_b = 50, nodes_h1 = 40, nodes_h2 = 30, nodes_h3 = 20, activation__ = "relu", loss__ = "mean_squared_error"):
         model = Sequential() #Using the Built-in 'Sequential' architecture --> layer for layer in sequential order from input to output.
         #Now adding layers:
-        model.add(Dense(nodes_b, input_shape=(NN_input_shape), activation = activation_)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
+        model.add(Dense(nodes_b, input_shape=(NN_input_shape), activation=activation__)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
         if layers >= 3:
-            model.add(Dense(nodes_h1, activation = activation_)) #After the initial layer, the amount of inputs does not need to be specified.
+            model.add(Dense(nodes_h1, activation=activation__)) #After the initial layer, the amount of inputs does not need to be specified.
         if layers >= 4:
-            model.add(Dense(nodes_h2, activation = activation_))
+            model.add(Dense(nodes_h2, activation=activation__))
         if layers >= 5:
-            model.add(Dense(nodes_h3, activation = activation_))
+            model.add(Dense(nodes_h3, activation=activation__))
         model.add(Dense(NN_output_size, activation = "softmax")) #Since we want the NN to output a probability, softmax is used in the final layer.
-        model.compile(loss = loss_, optimizer = Adam(lr = self.lr))
+        model.compile(loss=loss__, optimizer = Adam(lr = self.lr))
         #Like Stochastic Gradient Descent (SGD), Adam is a optimization algorithm to optimize the policy of this NN. Unlike SGD, Adam is able to optimize the NN based on iterative based training data (--> no need for historical, labelled data).
         #The loss can be chosen from the Keras set by the GA, but is chosen as mean_squared_error (most straightforward) for now.
         return(model)
@@ -108,7 +110,7 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
 
 
 #Testing if the DQN works:
-main(gamma_r = 0.85, epsilon_r = 1.0, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.005, tau_r = 0.125, layers_r = 5, nodes_b_r = 80, nodes_h1_r = 40, nodes_h2_r = 20, nodes_h3_r = 10, activation_r = "relu", loss_r = "crossentropy", batch_size_r = 32)
+main(gamma_r = 0.85, epsilon_r = 1.0, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.005, tau_r = 0.125, layers_r = 5, nodes_b_r = 80, nodes_h1_r = 40, nodes_h2_r = 20, nodes_h3_r = 10, activation_r = "relu", loss_r = "categorical_crossentropy", batch_size_r = 32)
 
 ###The Genetic Algorithm
 #For this project, the gen_length of the 'organisms' is equal to the amount of hyperparameters that have been indicated with 'hyperparameter_i' in the code, being 
@@ -236,7 +238,7 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
     elif genome[13] <= 1:
         nodes_b_i = 1
     else:
-        nodes_b_i = int(match.ceil(genome[13]))
+        nodes_b_i = int(math.ceil(genome[13]))
 
     #Now that all hyperparameters are entered, it is time to actually start the fitness function.
     t_0 = time.perf_counter()
