@@ -65,6 +65,8 @@ class PacmanGame:
         self.writer.color('white')
         self.writer.write(self.state['score'])
         self.world()
+        self.output = self.tiles
+        self.output.extend([0,0,0,0])
         
 
 
@@ -358,7 +360,7 @@ class PacmanGame:
         output = numpy.random.randint(4)
         return output
     def get_gameOutput(self):
-        directions = numpy.zeros(4)
+        directions = [0,0,0,0]
         for i in range(4):
             if self.ghosts[i][1] == vector(0,20):
                 directions[i] = 8
@@ -368,7 +370,9 @@ class PacmanGame:
                 directions[i] = 10
             elif self.ghosts[i][1] == vector(-20, 0):
                 directions[i] = 11
-        output = numpy.append(self.tiles, directions)
+        for i in range(4):
+            self.output[-i-1] = directions[i]
+        output = numpy.asarray(self.output)
         return output
     #self.window.listen()
     # self.window.onkey(lambda: self.run(), 'Right')

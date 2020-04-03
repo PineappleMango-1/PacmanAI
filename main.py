@@ -76,11 +76,13 @@ class Q_learning:
         self.target_model.set_weights(target_weights)
 
     def act(self, state):
+        print(state.shape)
         self.epsilon *= self.epsilon_decay #Update the epsilon value.
+        print(self.model.predict(state))
         self.epsilon = max(self.epsilon_min, self.epsilon) #If epsilon is lower than the threshold value, take the threshold value.
         if np.random.random() < self.epsilon: #There is a epsilon probability that we will take a random action, instead of the action that seems to be best.
             return np.random.randint(0,4) #Take a random integer, representing either doign nothing, turning left, right, or turn around.
-        return np.argmax(self.model.predict(state) [0])
+        return np.argmax(self.model.predict(state)[0])
 
 def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 32): #Integrate all hyperparameters into relevant functions.
     gamma = gamma_r
