@@ -7,8 +7,8 @@ import random
 from collections import deque
 from pacman_game import PacmanGame
 
-game = PacmanGame()
-NN_output_size = 3 #Number of inputs for the game (left, right, turn around).
+game = PacmanGame() #initialising PacmanGame
+NN_output_size = 4 #Number of inputs for the game (left, right, turn around).
 
 class Q_learning:
     #Creating the models
@@ -81,13 +81,13 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
     gamma = gamma_r
     epsilon = epsilon_r
 
-    trails = 40
-    trail_len = 5000
+    trials = 40
+    trial_len = 5000
 
     network = Q_learning(gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
     rewards_his = []
-    for trail in range(trails):
-        cur_state = game.get_gameOutput() #Grabs the environment from the last frame and one-hot encodes it into input for the NN, with 12 possible classes for each entry.
+    for trial in range(trials):
+        cur_state, dummy_1, dummy_2 = game.update(3) #Start the game and do nothing, to initialise and get the first environment
         rewards = 0 #The cummulative score for a specific game
         for step in range(trial_len):
             action = network.act(cur_state) #Create an action to take
@@ -101,7 +101,7 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
             if done:
                 final_score = rewards
                 rewards_his.append(final_score)
-    return(rewards_his)
+    return(rewards_his, final_score) #if final_score doesn't work, return rewards_his[-1]
 
 
 ###The Genetic Algorithm
@@ -234,8 +234,8 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
 
     #Now that all hyperparameters are entered, it is time to actually start the fitness function.
     t_0 = time.perf_counter()
-    main(gamma_r = gamma_i, epsilon_r = epsilon_i, epsilon_decay_r = epsilon_decay_i, epsilon_min_r = epsilon_min_i, lr_r = lr_i, tau_r = tau_i, layers_r = layers_i, nodes_b_r = nodes_b_i, nodes_h1_r = nodes_h1_i, nodes_h2_r = nodes_h2_i, nodes_h3_r = nodes_h3_i, activation_r = activation_i, loss_r = loss_i, batch_size_r = batch_size_i)
-    fitness_1 = rewards_his[trails-1]
+    rewards_his, final_score = main(gamma_r = gamma_i, epsilon_r = epsilon_i, epsilon_decay_r = epsilon_decay_i, epsilon_min_r = epsilon_min_i, lr_r = lr_i, tau_r = tau_i, layers_r = layers_i, nodes_b_r = nodes_b_i, nodes_h1_r = nodes_h1_i, nodes_h2_r = nodes_h2_i, nodes_h3_r = nodes_h3_i, activation_r = activation_i, loss_r = loss_i, batch_size_r = batch_size_i)
+    fitness_1 = final_score
     t_f = time.perf_counter()
     Delta_t = (t_f - t_0) * 0.01 #Penalty to equalise points with training time's influence (it should be heavily penalised if calculations take too long, since it would slow down the training of all of the NNs significantly if they all take a lot of time).
     fitness = fitness_1 - Delta_t
@@ -286,7 +286,7 @@ def cross_and_mutate(pop, pop_size):
         mutate(offspring[i])
     return offspring
 
-def run(N = 14, gen_length = 14, num_generations = 10, Fitness_function = F):
+def run(N = 10, gen_length = 14, num_generations = 10, Fitness_function = F):
     size_population = 4 * N #the actual amount of individuals
     pop_size = (size_population, gen_length) #The entire population, described in terms of its population size and the amount of alleles per individual.
     new_population = np.ndarray((pop_size)) #Generate gen 0, with random values for each allele between 0 and 100. <--- ARBITRARY VALUES, FEEL FREE TO TWEAK!
@@ -300,7 +300,7 @@ def run(N = 14, gen_length = 14, num_generations = 10, Fitness_function = F):
     for generation in range(num_generations):
         for individual in range(size_population):
             fitness[individual] = Fitness_function(new_population[individual]) #The fitness is determined by the values of the genes of that individual
-        Ranking = np.argsort(fitness)[::1] #Ranking individuals from lowest to highest fitness value.
+        Ranking = np.argsort(fitness)[::-1] #Ranking individuals from highest to lowest fitness value.
         fitness = fitness[Ranking] #Sort the fitness according to the ranks
         fitness_his = np.append(fitness_his, fitness[0]) #Add the highest fitness value as entry for this generation to the history.
         new_population = new_population[Ranking] #Sort the new population according to the ranks
