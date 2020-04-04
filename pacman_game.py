@@ -243,7 +243,7 @@ class PacmanGame:
         course = self.pinky[1]
         col = self.pinky[2]
         self.prev_index_pinky[2] = self.offset(loc)
-        goal = self.findPac(self.pacman[0] + 10*pacAim, loc)
+        goal = self.findPac(self.pacman[0] + 5*pacAim, loc)
         if self.valid(loc + goal, False) and (goal != -course):
             course.x = goal.x
             course.y = goal.y
@@ -342,7 +342,7 @@ class PacmanGame:
         self.aim.y = self.prev_aim.x
 
     def turn_around(self, prev_aim):
-        self.aim.x = self.prev_aim.x
+        self.aim.x = -self.prev_aim.x
         self.aim.y = -self.prev_aim.y
 
     def get_input(self, NN_output):
