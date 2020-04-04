@@ -63,7 +63,7 @@ class PacmanGame:
         self.window.tracer(False)
         self.writer.goto(160, 160)
         self.writer.color('white')
-        self.writer.write(self.state['score'])
+        #self.writer.write(self.state['score'])
         self.world()
         self.output = self.tiles
         self.output.extend([0,0,0,0])
@@ -374,7 +374,6 @@ class PacmanGame:
             self.output[-i-1] = directions[i]
         output = numpy.asarray(self.output)
         return output
-    #self.window.listen()
     # self.window.onkey(lambda: self.run(), 'Right')
     def restart(self):
         self.prev_aim = vector(20,0)
@@ -441,7 +440,8 @@ class PacmanGame:
         self.reward = -0.1
         #this uses the NN output to control Pacman
         index = self.offset(self.pacman[0])
-        self.writer.undo()
+        self.writer.clear()
+        #self.writer.undo()
         self.pac.clear()
         self.ghost.clear()
         if self.tiles[index] == 1:
@@ -490,39 +490,36 @@ class PacmanGame:
                 print("you died")
                 self.done = True
                 self.reward = -100
-            if new_index == self.prev_index_clyde[2] and self.clyde[0] == self.prev_index:
+            if new_index == self.prev_index_clyde[2] and self.prev_index_clyde[0] == self.prev_index:
                 print("you died")
                 self.done = True
                 self.reward = -100        
         if self.state['score'] == 159:
             self.done = True
             self.reward = 100
+        if self.done:
+            self.writer.clear()
+        turtle.update()
         return self.get_gameOutput(), self.reward, self.done
-        #self.window.ontimer(self.update, 1000)
 
     def run(self):
         # global attempt
 
-        
+        self.window.listen()
         self.pac.hideturtle()
         self.ghost.hideturtle()
         self.writer.up()
         self.window.tracer(False)
         self.writer.goto(160, 160)
         self.writer.color('white')
-        self.writer.write(self.state['score'])
-        self.window.onkey(lambda: self.right(self.prev_aim), 'Right')
-        self.window.onkey(lambda: self.left(self.prev_aim), 'Left')
+        #self.writer.write(self.state['score'])
+        #self.window.onkey(lambda: self.right(self.prev_aim), 'Right')
+        #self.window.onkey(lambda: self.left(self.prev_aim), 'Left')
         #window.onkey(lambda: change(0, 5), 'Up')
-        self.window.onkey(lambda: self.turn_around(self.prev_aim), 'Down')
+        #self.window.onkey(lambda: self.turn_around(self.prev_aim), 'Down')
         self.world()
-        #self.update()
-        turtle.done()
 
         
 
         
     # self.turtle.done()
-
-#game = PacmanGame()
-#game.run()
