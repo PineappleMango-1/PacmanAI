@@ -376,6 +376,63 @@ class PacmanGame:
         return output
     #self.window.listen()
     # self.window.onkey(lambda: self.run(), 'Right')
+    def restart(self):
+        self.prev_aim = vector(20,0)
+        self.pac = turtle.Turtle(visible=False)
+        self.ghost = turtle.Turtle(visible=False)
+        self.blinky = [vector(-180, 160), vector(20, 0), "red"]
+        self.pinky =  [vector(100, 160), vector(0, -20), "pink"]
+        self.inky = [vector(100, -160), vector(-20, 0), "cyan"]
+        self.clyde = [vector(-180, -160), vector(0, 20), "orange"]
+        self.ghosts = [self.blinky, self.pinky, self.inky, self.clyde]
+        self.window = turtle.Screen()
+        self.state = {'score': 0}
+        self.path = turtle.Turtle(visible=False)
+        self.writer = turtle.Turtle(visible=False)
+        self.aim = vector(20, 0)
+        self.pacman = [vector(-40, -80), vector(0,0)]
+        self.chase = False
+        self.tunnel = [160, 161, 162, 163, 173, 174, 175, 176]
+        self.tiles = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+            0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0,
+            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+            0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0,
+            0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0,
+            0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+            1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+            0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+            0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0,
+            0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0,
+            0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0,
+            0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0,
+            0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ]
+        self.prev_index = self.offset(self.pacman[0])
+        self.prev_index_blinky = [self.offset(self.blinky[0]), self.tiles[self.offset(self.blinky[0])], self.offset(self.blinky[0])]
+        self.prev_index_inky = [self.offset(self.inky[0]), self.tiles[self.offset(self.inky[0])], self.offset(self.inky[0])]
+        self.prev_index_pinky = [self.offset(self.pinky[0]), self.tiles[self.offset(self.pinky[0])], self.offset(self.pinky[0])]
+        self.prev_index_clyde = [self.offset(self.clyde[0]), self.tiles[self.offset(self.clyde[0])], self.offset(self.clyde[0])]
+        self.attempt = 0
+        self.i = 0
+        self.j = 0
+        self.pac.hideturtle()
+        self.ghost.hideturtle()
+        self.writer.up()
+        self.window.tracer(False)
+        self.writer.goto(160, 160)
+        self.writer.color('white')
+        self.writer.write(self.state['score'])
+        self.world()
+        self.output = self.tiles
+        self.output.extend([0,0,0,0])
     def update(self, input):
         #output = self.get_output()
         #this simulates the NN output

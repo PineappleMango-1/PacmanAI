@@ -66,7 +66,7 @@ class Q_learning:
             else:
                 Q_future = max(self.target_model.predict(new_state) [0]) #Cummulative future rewards
                 target[0][action] = reward + Q_future * self.gamma #The target of the self.model is to get the best current reward combined with all expected future rewards, multiplied by gamma.
-            self.model.fit(state, target, epochs=5, verbose=1) #Trains the number for a given amount of epochs #verbose = 1 shows a progress bar of how far you are with regards to the total amount of epochs 
+            self.model.fit(state, target, epochs=5, verbose=0) #Trains the number for a given amount of epochs #verbose = 1 shows a progress bar of how far you are with regards to the total amount of epochs 
     
     def target_train(self): #Training the target model less frequently, to make sure its goal is more consistent over time.
         weights = self.model.get_weights()
@@ -82,7 +82,7 @@ class Q_learning:
             return np.random.randint(0,4) #Take a random integer, representing either doign nothing, turning left, right, or turn around.
         return np.argmax(self.model.predict(state)[0])
 
-def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 32): #Integrate all hyperparameters into relevant functions.
+def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 2): #Integrate all hyperparameters into relevant functions.
     gamma = gamma_r
     epsilon = epsilon_r
 
@@ -92,9 +92,12 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
     network = Q_learning(gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
     rewards_his = []
     for trial in range(trials):
+        print("trial: ",trial)
+        game.restart()
         cur_state, dummy_1, dummy_2 = game.update(3) #Start the game and do nothing, to initialise and get the first environment
         rewards = 0 #The cummulative score for a specific game
         for step in range(trial_len):
+            print("step: ",step)
             action = network.act(cur_state) #Create an action to take
             new_state, reward, done = game.update(action) #TO BE LOOKED INTO, correct outputs have to be given.
             rewards += reward
@@ -106,6 +109,9 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
             if done:
                 final_score = rewards
                 rewards_his.append(final_score)
+                print("final score: ", final_score)
+                break
+            
     return(rewards_his, final_score) #if final_score doesn't work, return rewards_his[-1]
 
 
@@ -294,7 +300,7 @@ def cross_and_mutate(pop, pop_size):
         mutate(offspring[i])
     return offspring
 
-def run(N = 10, gen_length = 14, num_generations = 10, Fitness_function = F):
+def run(N = 2, gen_length = 14, num_generations = 3, Fitness_function = F):
     size_population = 4 * N #the actual amount of individuals
     pop_size = (size_population, gen_length) #The entire population, described in terms of its population size and the amount of alleles per individual.
     new_population = np.ndarray((pop_size)) #Generate gen 0, with random values for each allele between 0 and 100. <--- ARBITRARY VALUES, FEEL FREE TO TWEAK!
