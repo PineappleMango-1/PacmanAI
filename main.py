@@ -329,6 +329,7 @@ def run(N = 2, gen_length = 14, num_generations = 5, Fitness_function = F):
             fitness[individual] = Fitness_function(new_population[individual])
     Ranking = np.argsort(fitness)[::-1]
     fitness = fitness[Ranking]
+    new_population = new_population[Ranking]
     print("Fitness:",fitness[0],"New_Population",new_population[0],"Fitness_his",fitness_his)
     return(fitness[0], new_population[0], fitness_his)
 
