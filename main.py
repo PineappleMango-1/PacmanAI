@@ -13,7 +13,7 @@ from pacman_game import PacmanGame
 
 game = PacmanGame() #initialising PacmanGame
 NN_output_size = 4  #Number of inputs for the game (left, right, turn around)
-NN_input_shape = (404,) #Size of the state inputted by the game
+NN_input_shape = (1,) #Size of the state inputted by the game
 
 class Q_learning:
     #Creating the models
@@ -76,9 +76,7 @@ class Q_learning:
         self.target_model.set_weights(target_weights)
 
     def act(self, state):
-        print(state.shape)
         self.epsilon *= self.epsilon_decay #Update the epsilon value.
-        print(self.model.predict(state))
         self.epsilon = max(self.epsilon_min, self.epsilon) #If epsilon is lower than the threshold value, take the threshold value.
         if np.random.random() < self.epsilon: #There is a epsilon probability that we will take a random action, instead of the action that seems to be best.
             return np.random.randint(0,4) #Take a random integer, representing either doign nothing, turning left, right, or turn around.
