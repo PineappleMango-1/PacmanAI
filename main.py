@@ -325,8 +325,9 @@ def run(N = 2, gen_length = 14, num_generations = 5, Fitness_function = F):
         new_population = offspring_crossover #Initialise the new generation as the generation to be ranked, etc.
         print("Generation", generation, "has a highest fitness of", fitness[0], "with genome", new_population[0])
     for individual in range(size_population): #The entire loop is repeated one last time for the final generation.
+            print("#Individual: ", individual+1,"/", size_population)
             fitness[individual] = Fitness_function(new_population[individual])
-    Ranking = np.argsort(fitness)
+    Ranking = np.argsort(fitness)[::-1]
     fitness = fitness[Ranking]
     print("Fitness:",fitness[0],"New_Population",new_population[0],"Fitness_his",fitness_his)
     return(fitness[0], new_population[0], fitness_his)
