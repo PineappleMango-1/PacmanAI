@@ -475,23 +475,23 @@ class PacmanGame:
         # print("clyde:" ,self.prev_index_clyde[0],  self.prev_index_clyde[2])
         for point, course, col in self.ghosts:
             if abs(point - self.pacman[0]) < 10:
-                print("you died")
+                print("you died     ")
                 self.done = True
                 self.reward = -100
-            if new_index == self.prev_index_blinky[2] and self.prev_index_blinky[0] == self.prev_index:
-                print("you died")
+        if new_index == self.prev_index_blinky[2] and self.prev_index_blinky[0] == self.prev_index:
+                print("you died     ")
                 self.done = True
                 self.reward = -100
-            if new_index == self.prev_index_inky[2] and self.prev_index_inky[0] == self.prev_index:
-                print("you died")
+        elif new_index == self.prev_index_inky[2] and self.prev_index_inky[0] == self.prev_index:
+                print("you died     ")
                 self.done = True
                 self.reward = -100
-            if new_index == self.prev_index_pinky[2] and self.prev_index_pinky[0] == self.prev_index:
-                print("you died")
+        elif new_index == self.prev_index_pinky[2] and self.prev_index_pinky[0] == self.prev_index:
+                print("you died     ")
                 self.done = True
                 self.reward = -100
-            if new_index == self.prev_index_clyde[2] and self.prev_index_clyde[0] == self.prev_index:
-                print("you died")
+        elif new_index == self.prev_index_clyde[2] and self.prev_index_clyde[0] == self.prev_index:
+                print("you died     ")
                 self.done = True
                 self.reward = -100        
         if self.state['score'] == 159:

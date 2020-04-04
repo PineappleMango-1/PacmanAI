@@ -86,18 +86,18 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
     gamma = gamma_r
     epsilon = epsilon_r
 
-    trials = 40
-    trial_len = 5000
+    trials = 2
+    trial_len = 500
 
     network = Q_learning(gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
     rewards_his = []
     for trial in range(trials):
-        print("trial: ",trial)
         game.restart()
         cur_state, dummy_1, dummy_2 = game.update(3) #Start the game and do nothing, to initialise and get the first environment
         rewards = 0 #The cummulative score for a specific game
+        print("Trial:", trial)
         for step in range(trial_len):
-            print("step: ",step)
+            print("step: ",step, end='\r')
             action = network.act(cur_state) #Create an action to take
             new_state, reward, done = game.update(action) #TO BE LOOKED INTO, correct outputs have to be given.
             rewards += reward
@@ -109,6 +109,7 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
             if done:
                 final_score = rewards
                 rewards_his.append(final_score)
+                print("Total steps: ", step)
                 print("final score: ", final_score)
                 break
             
@@ -116,7 +117,7 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
 
 
 #Testing if the DQN works:
-main(gamma_r = 0.85, epsilon_r = 1.0, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.005, tau_r = 0.125, layers_r = 5, nodes_b_r = 80, nodes_h1_r = 40, nodes_h2_r = 20, nodes_h3_r = 10, activation_r = "relu", loss_r = "categorical_crossentropy", batch_size_r = 32)
+#main(gamma_r = 0.85, epsilon_r = 1.0, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.005, tau_r = 0.125, layers_r = 5, nodes_b_r = 80, nodes_h1_r = 40, nodes_h2_r = 20, nodes_h3_r = 10, activation_r = "relu", loss_r = "categorical_crossentropy", batch_size_r = 32)
 
 ###The Genetic Algorithm
 #For this project, the gen_length of the 'organisms' is equal to the amount of hyperparameters that have been indicated with 'hyperparameter_i' in the code, being 
@@ -189,20 +190,20 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
 
     #In Keros, there are 9 activation functions available for hidden layers which do not neat tuning, being described below:
     activation_list = ["relu", "tanh", "sigmoid", "hard_sigmoid", "exponential", "linear", "softmax", "softplus", "softsign"]
-    for i in range(activation_list.size): #Grabs an activation based on the size of the genome.
-        if i == 0 and genome[7] < 100/(activation_list.size):
+    for i in range(1,len(activation_list)+1): #Grabs an activation based on the size of the genome.
+        if i == 0 and genome[7] < 100/(len(activation_list)):
             activation_i = activation_list[i]
-        elif 100/(activation_list.size/i)< genome[7] <= 100/(activation_list.size/i+1):
+        elif 100/(len(activation_list)/i)< genome[7] <= 100/(len(activation_list)/i+1):
             activation_i = activation_list[i]
         else:
             activation_i = "linear" #Safeguard if genome[7] > 100, picked a function that is generally a bad activation function (does nothing).
 
     #In Keros, there are 12 loss functions that do not require specific inputs (for example, only categorical targets)
     loss_list = ["mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "squared_hinge", "hinge", "logcosh", "huber_loss", "binary_crossentropy", "kullback_leibler_divergence", "poisson", "cosine_proximity"]
-    for i in range(loss_list.size):
-        if i == 0 and genome[8] < 100/(loss_list.size):
+    for i in range(1,len(loss_list)+1):
+        if i == 0 and genome[8] < 100/(len(loss_list)):
             loss_i = loss_list[i]
-        elif 100/(loss_list.size/i)< genome[8] <= 100/(loss_list.size/i+1):
+        elif 100/(len(loss_list)/i)< genome[8] <= 100/(len(loss_list)/i+1):
             loss_i = loss_list[i]
         else:
             loss_i = "mean_squared_error" #Safeguard if genome[8] > 100. I do not have a good understanding of loss functions, so I took the first one I saw (--> arbitrary).
@@ -300,7 +301,7 @@ def cross_and_mutate(pop, pop_size):
         mutate(offspring[i])
     return offspring
 
-def run(N = 2, gen_length = 14, num_generations = 3, Fitness_function = F):
+def run(N = 2, gen_length = 14, num_generations = 5, Fitness_function = F):
     size_population = 4 * N #the actual amount of individuals
     pop_size = (size_population, gen_length) #The entire population, described in terms of its population size and the amount of alleles per individual.
     new_population = np.ndarray((pop_size)) #Generate gen 0, with random values for each allele between 0 and 100. <--- ARBITRARY VALUES, FEEL FREE TO TWEAK!
@@ -312,7 +313,9 @@ def run(N = 2, gen_length = 14, num_generations = 3, Fitness_function = F):
     fitness = np.zeros(size_population) #initialise the fitness function as an array in which the fitness of all individuals can be described.
     fitness_his = [] #This variable will be used to plot the fitness over iterations.
     for generation in range(num_generations):
+        print("#Generation:", generation)
         for individual in range(size_population):
+            print("#Individual: ", individual+1,"/", size_population)
             fitness[individual] = Fitness_function(new_population[individual]) #The fitness is determined by the values of the genes of that individual
         Ranking = np.argsort(fitness)[::-1] #Ranking individuals from highest to lowest fitness value.
         fitness = fitness[Ranking] #Sort the fitness according to the ranks
@@ -325,4 +328,8 @@ def run(N = 2, gen_length = 14, num_generations = 3, Fitness_function = F):
             fitness[individual] = Fitness_function(new_population[individual])
     Ranking = np.argsort(fitness)
     fitness = fitness[Ranking]
+    print("Fitness:",fitness[0],"New_Population",new_population[0],"Fitness_his",fitness_his)
     return(fitness[0], new_population[0], fitness_his)
+
+#best_fitness, best_genome, fitness_his = run()
+run()
