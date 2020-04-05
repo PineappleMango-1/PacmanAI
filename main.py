@@ -18,7 +18,7 @@ NN_input_shape = (1,) #Size of the state inputted by the game
 class Q_learning:
     #Creating the models
     def __init__(self, gamma_ = 0.9, epsilon_ = 1, epsilon_decay_ = 0.995, epsilon_min_ = 0.01, lr_ = 1, tau_ = 0.1, layers_ = 3, nodes_b_ = 50, nodes_h1_ = 40, nodes_h2_ = 30, nodes_h3_ = 20, activation_ = "relu", loss_ = "mean_squared_error"):
-        self.memory = deque(maxlen = 20000) #Make an empty deque to store information, which is a list-like datatype that can append data faster than a normal list. Maxlen as a failsafe.
+        self.memory = deque(maxlen = 800) #Make an empty deque to store information, which is a list-like datatype that can append data faster than a normal list. Maxlen is 800, as it will have enough batches to learn from by then.
         #Hyperparameters, to be tweaked by GA when initialising a NN with its unique 'i' hyperparameters.
         self.gamma = gamma_ #Discount factor. Every reward gets multiplied by gamma after each step, lowering the importance of initial reward.
         self.epsilon = epsilon_ #'Random' factor. The higher this value, the more not random choices are made (more reliant on the NN's weights and biases).
@@ -84,7 +84,7 @@ class Q_learning:
 
 def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16): #Integrate all hyperparameters into relevant functions.
     
-    trials = 100
+    trials = 30
     trial_len = 800
 
     network = Q_learning(gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
@@ -326,4 +326,5 @@ def run(N = 2, gen_length = 14, num_generations = 5, Fitness_function = F):
     return(fitness[0], new_population[0], fitness_his)
 
 #best_fitness, best_genome, fitness_his = run()
-reward_his, final_score = main()
+rewards_his, final_score = main()
+print(rewards_his, final_score)
