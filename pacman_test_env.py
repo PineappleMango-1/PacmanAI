@@ -134,7 +134,7 @@ class PacmanGame:
         # global attempt
         if self.offset(self.pacman[0]) == 160:
             self.pacman[0] = vector(100,20)
-        if self.offset(self.pacman[0]) == 176:
+        elif self.offset(self.pacman[0]) == 176:
             self.pacman[0] = vector(-200 , 20)
         if self.attempt == 10:
             self.aim = self.prev_aim.copy()
@@ -499,7 +499,10 @@ class PacmanGame:
         if self.done:
             return
             self.writer.clear()
+        if new_index == self.prev_index:
+            self.reward += -100
         turtle.update()
+        print(self.reward)
         time.sleep(0.4)
         self.window.ontimer(self.update(), 1000)
 

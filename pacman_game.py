@@ -477,28 +477,30 @@ class PacmanGame:
             if abs(point - self.pacman[0]) < 10:
                 print("you died     ")
                 self.done = True
-                self.reward = -100
+                self.reward += -100
         if new_index == self.prev_index_blinky[2] and self.prev_index_blinky[0] == self.prev_index:
                 print("you died     ")
                 self.done = True
-                self.reward = -100
+                self.reward += -100
         elif new_index == self.prev_index_inky[2] and self.prev_index_inky[0] == self.prev_index:
                 print("you died     ")
                 self.done = True
-                self.reward = -100
+                self.reward += -100
         elif new_index == self.prev_index_pinky[2] and self.prev_index_pinky[0] == self.prev_index:
                 print("you died     ")
                 self.done = True
-                self.reward = -100
+                self.reward += -100
         elif new_index == self.prev_index_clyde[2] and self.prev_index_clyde[0] == self.prev_index:
                 print("you died     ")
                 self.done = True
-                self.reward = -100        
+                self.reward += -100        
         if self.state['score'] == 159:
             self.done = True
             self.reward = 100
         if self.done:
             self.writer.clear()
+        if new_index == self.prev_index:
+            self.reward += -100
         turtle.update()
         return self.get_gameOutput(), self.reward, self.done
 
