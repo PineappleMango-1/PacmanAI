@@ -82,12 +82,10 @@ class Q_learning:
             return np.random.randint(0,4) #Take a random integer, representing either doign nothing, turning left, right, or turn around.
         return np.argmax(self.model.predict(state)[0])
 
-def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 2): #Integrate all hyperparameters into relevant functions.
-    gamma = gamma_r
-    epsilon = epsilon_r
-
-    trials = 2
-    trial_len = 500
+def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16): #Integrate all hyperparameters into relevant functions.
+    
+    trials = 100
+    trial_len = 800
 
     network = Q_learning(gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
     rewards_his = []
@@ -133,14 +131,13 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
     #genome[3] = epsilon_min
     #genome[4] = learning rate (lr)
     #genome[5] = tau
-    #genome[6] = batch_size
-    #genome[7] = activation (function)
-    #genome[8] = loss (function)
-    #genome[9] = amount of layers
-    #genome[10] = amount of nodes in hidden second layer
-    #genome[11] = amount of nodes in hidden third layer
-    #genome[12] = amount of nodes in hidden fourth layer
-    #genome[13] = amount of nodes in hidden first layer (after input)
+    #genome[6] = activation (function)
+    #genome[7] = loss (function)
+    #genome[8] = amount of layers
+    #genome[9] = amount of nodes in hidden second layer
+    #genome[10] = amount of nodes in hidden third layer
+    #genome[11] = amount of nodes in hidden fourth layer
+    #genome[12] = amount of nodes in hidden first layer (after input)
     if genome[0] >= 1: #Value of gamma
         gamma_i = genome[1]/100
     elif genome[0] <= 0:
@@ -183,73 +180,68 @@ def F(genome): #The fitness function inputs a certain amount of hyperparameters 
     else:
         tau_i = genome[5]
 
-    if genome[6] <= 0: #Batch Size
-        batch_size_i = 1
-    else:
-        batch_size_i = int(math.ceil(genome[6])) #Needs to be a whole number --> integer & ceil (so it doesn't become 0)
-
     #In Keros, there are 9 activation functions available for hidden layers which do not neat tuning, being described below:
     activation_list = ["relu", "tanh", "sigmoid", "hard_sigmoid", "exponential", "linear", "softmax", "softplus", "softsign"]
     for i in range(1,len(activation_list)+1): #Grabs an activation based on the size of the genome.
-        if i == 0 and genome[7] < 100/(len(activation_list)):
+        if i == 0 and genome[6] < 100/(len(activation_list)):
             activation_i = activation_list[i]
-        elif 100/(len(activation_list)/i)< genome[7] <= 100/(len(activation_list)/i+1):
+        elif 100/(len(activation_list)/i)< genome[6] <= 100/(len(activation_list)/i+1):
             activation_i = activation_list[i]
         else:
-            activation_i = "linear" #Safeguard if genome[7] > 100, picked a function that is generally a bad activation function (does nothing).
+            activation_i = "linear" #Safeguard if genome[8] > 100, picked a function that is generally a bad activation function (does nothing).
 
     #In Keros, there are 12 loss functions that do not require specific inputs (for example, only categorical targets)
     loss_list = ["mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "squared_hinge", "hinge", "logcosh", "huber_loss", "binary_crossentropy", "kullback_leibler_divergence", "poisson", "cosine_proximity"]
     for i in range(1,len(loss_list)+1):
-        if i == 0 and genome[8] < 100/(len(loss_list)):
+        if i == 0 and genome[7] < 100/(len(loss_list)):
             loss_i = loss_list[i]
-        elif 100/(len(loss_list)/i)< genome[8] <= 100/(len(loss_list)/i+1):
+        elif 100/(len(loss_list)/i)< genome[7] <= 100/(len(loss_list)/i+1):
             loss_i = loss_list[i]
         else:
-            loss_i = "mean_squared_error" #Safeguard if genome[8] > 100. I do not have a good understanding of loss functions, so I took the first one I saw (--> arbitrary).
+            loss_i = "mean_squared_error" #Safeguard if genome[7] > 100. I do not have a good understanding of loss functions, so I took the first one I saw (--> arbitrary).
 
 
     #Number of total layers, which has a hard-coded max of 5 layers. Higher numbers will result in 5 layers to be created.
     layers_i = 2 #in- and output layer.
-    if genome[9] > 25:
+    if genome[8] > 25:
         layers_i += 1
-    if genome[9] > 50:
+    if genome[8] > 50:
         layers_i += 1
-    if genome[9] > 75:
+    if genome[8] > 75:
         layers_i += 1
 
     #For nodes per layer, we might want to find a more efficient way (Maybe if layers_i == 3 for example, only load nodes_h1_i)
-    if genome[10] > 200: #Nodes in first hidden layer
+    if genome[9] > 200: #Nodes in first hidden layer
         nodes_h1_i = 200
-    elif genome[10] <= 1:
+    elif genome[9] <= 1:
         nodes_h1_i = 1
     else:
-        nodes_h1_i = int(math.ceil(genome[10])) #Ceil is arbitrarely chosen here
+        nodes_h1_i = int(math.ceil(genome[9])) #Ceil is arbitrarely chosen here
 
-    if genome[11] > 200: #Nodes in second hidden layer
+    if genome[10] > 200: #Nodes in second hidden layer
         nodes_h2_i = 200
-    elif genome[11] <= 1:
+    elif genome[10] <= 1:
         nodes_h2_i = 1
     else:
-        nodes_h2_i = int(math.ceil(genome[11])) #Ceil is arbitrarely chosen here
+        nodes_h2_i = int(math.ceil(genome[10])) #Ceil is arbitrarely chosen here
 
-    if genome[12] > 200: #Nodes in third hidden layer
+    if genome[11] > 200: #Nodes in third hidden layer
         nodes_h3_i = 200
-    elif genome[12] <= 1:
+    elif genome[11] <= 1:
         nodes_h3_i = 1
     else:
-        nodes_h3_i = int(math.ceil(genome[12])) #Ceil is arbitrarely chosen here
+        nodes_h3_i = int(math.ceil(genome[11])) #Ceil is arbitrarely chosen here
 
-    if genome[13] > 200: #Nodes in the first layer, actually being the first true 'hidden' layer already.
+    if genome[12] > 200: #Nodes in the first layer, actually being the first true 'hidden' layer already.
         nodes_b_i = 200
-    elif genome[13] <= 1:
+    elif genome[12] <= 1:
         nodes_b_i = 1
     else:
-        nodes_b_i = int(math.ceil(genome[13]))
+        nodes_b_i = int(math.ceil(genome[12]))
 
     #Now that all hyperparameters are entered, it is time to actually start the fitness function.
     t_0 = time.perf_counter()
-    rewards_his, final_score = main(gamma_r = gamma_i, epsilon_r = epsilon_i, epsilon_decay_r = epsilon_decay_i, epsilon_min_r = epsilon_min_i, lr_r = lr_i, tau_r = tau_i, layers_r = layers_i, nodes_b_r = nodes_b_i, nodes_h1_r = nodes_h1_i, nodes_h2_r = nodes_h2_i, nodes_h3_r = nodes_h3_i, activation_r = activation_i, loss_r = loss_i, batch_size_r = batch_size_i)
+    rewards_his, final_score = main(gamma_r = gamma_i, epsilon_r = epsilon_i, epsilon_decay_r = epsilon_decay_i, epsilon_min_r = epsilon_min_i, lr_r = lr_i, tau_r = tau_i, layers_r = layers_i, nodes_b_r = nodes_b_i, nodes_h1_r = nodes_h1_i, nodes_h2_r = nodes_h2_i, nodes_h3_r = nodes_h3_i, activation_r = activation_i, loss_r = loss_i)
     fitness_1 = final_score
     t_f = time.perf_counter()
     Delta_t = (t_f - t_0) * 0.01 #Penalty to equalise points with training time's influence (it should be heavily penalised if calculations take too long, since it would slow down the training of all of the NNs significantly if they all take a lot of time).
@@ -333,4 +325,4 @@ def run(N = 2, gen_length = 14, num_generations = 5, Fitness_function = F):
     return(fitness[0], new_population[0], fitness_his)
 
 #best_fitness, best_genome, fitness_his = run()
-run()
+reward_his, final_score = main()
