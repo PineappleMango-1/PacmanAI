@@ -72,7 +72,7 @@ class Q_learning:
                 target[0][action] = reward #Direct reward that is given with these actions
             else:
                 Q_future = max(self.target_model.predict(new_state) [0]) #Cummulative future rewards
-                print("Q Future: ", Q_future)
+                # print("Q Future: ", Q_future)
                 target[0][action] = reward + Q_future * self.gamma #The target of the self.model is to get the best current reward combined with all expected future rewards, multiplied by gamma.
             self.model.fit(state, target, epochs=5, verbose=0) #Trains the number for a given amount of epochs #verbose = 1 shows a progress bar of how far you are with regards to the total amount of epochs 
     
@@ -114,8 +114,8 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.999, epsilon_min_r = 
             action = network.act(cur_state) #Create an action to take
             new_state, reward, done = game.update(action) #TO BE LOOKED INTO, correct outputs have to be given.
             # print("state: ", new_state.shape)
+            print("Total reward", rewards)
             rewards += reward
-            print("reward", reward)
             network.remember(cur_state, action, reward, new_state, done) #Remember all these parameters, to learn later.
             network.replay(batch_size = batch_size_r) #Replay with a batch from the memory, updating the model every sample of the batch_size.
             network.target_train() #Train the target function once.
