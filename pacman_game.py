@@ -437,7 +437,7 @@ class PacmanGame:
         #this simulates the NN output
         self.done = False
         self.get_input(input)
-        self.reward = -0.1
+        self.reward = -2
         #this uses the NN output to control Pacman
         index = self.offset(self.pacman[0])
         self.writer.clear()
