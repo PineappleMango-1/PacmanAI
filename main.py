@@ -74,6 +74,8 @@ class Q_learning:
                 Q_future = max(self.target_model.predict(new_state) [0]) #Cummulative future rewards
                 # print("Q Future: ", Q_future)
                 target[0][action] = reward + Q_future * self.gamma #The target of the self.model is to get the best current reward combined with all expected future rewards, multiplied by gamma.
+            print("State: ", state)
+            print("Target: ", target)
             self.model.fit(state, target, epochs=5, verbose=0) #Trains the number for a given amount of epochs #verbose = 1 shows a progress bar of how far you are with regards to the total amount of epochs 
     
     def target_train(self): #Training the target model less frequently, to make sure its goal is more consistent over time.
