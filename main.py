@@ -30,7 +30,9 @@ class Q_learning:
         #Where self.model keeps changing its 'ideal policy' with each iteration (where is my next food pallet?), target_model keeps the 'end goal' in sight (highest eventual score).
         self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
         self.target_model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
- 
+        self.min_observe = 100
+
+
     def create_model(self, layers = 3, nodes_b = 50, nodes_h1 = 40, nodes_h2 = 30, nodes_h3 = 20, activation__ = "relu", loss__ = "mean_squared_error"):
         model = Sequential() #Using the Built-in 'Sequential' architecture --> layer for layer in sequential order from input to output.
         #Now adding layers:
@@ -41,43 +43,46 @@ class Q_learning:
             model.add(Dense(nodes_h2, activation=activation__))
         if layers >= 5:
             model.add(Dense(nodes_h3, activation=activation__))
-        model.add(Dense(self.NN_output_size, activation = "softmax")) #Since we want the NN to output a probability, softmax is used in the final layer.
+        model.add(Dense(self.NN_output_size, activation = activation__)) #Changed it so we don't want a probability anymore, but instead make it calculate the expected reward
         model.compile(loss=loss__, optimizer = Adam(lr = self.lr))
         #Like Stochastic Gradient Descent (SGD), Adam is a optimization algorithm to optimize the policy of this NN. Unlike SGD, Adam is able to optimize the NN based on iterative based training data (--> no need for historical, labelled data).
         #The loss can be chosen from the Keras set by the GA, but is chosen as mean_squared_error (most straightforward) for now.
-        print("model summary:", model.summary())
-        print("model inputs:", model.inputs)
-        print("model output:", model.outputs)
+        # print("model summary:", model.summary())
+        # print("model inputs:", model.inputs)
+        # print("model output:", model.outputs)
         return(model)
 
     #Saving information of a run:
     def remember(self, state, action, reward, new_state, done):
-        self.memory.append([state, action, reward, new_state, done]) #For each iteration, add to the memory what action has been taken in which environment (state), what reward has been given and what the new state is.
+        self.memory.append([state, action, reward, new_state, done])
+         #For each iteration, add to the memory what action has been taken in which environment (state), what reward has been given and what the new state is.
     
     #Training the Neural Network:
-    def replay(self, batch_size = 32):
-        if len(self.memory) < batch_size: #We can not use a batch size bigger than the amount of entries in the memory. So, first we create a memory of this length without learning.
+    def replay(self, batch_size = 64):
+        if len(self.memory) < self.min_observe: #sets a minimum amount of observations to learn from
             return
+        else:
+            samples = random.sample(self.memory, batch_size) #Using the random library, we pick a random batch of size batch-size of entries from the memory.
+            for sample in samples: #For the amount of samples:
+                state, action, reward, new_state, done = sample
+                
+                state = state.reshape((1,404))
+                # print("new state: ", new_state.shape)
+                new_state = new_state.reshape((1,404))
 
-        samples = random.sample(self.memory, batch_size) #Using the random library, we pick a random batch of size batch-size of entries from the memory.
-        for sample in samples: #For the amount of samples:
-            state, action, reward, new_state, done = sample
+                target = self.target_model.predict(state)
+                if done: #If the Learning process is finished / converged, is the future reward is equal to the next step.
+                    target[0][action] = reward #Direct reward that is given with these actions
+                else:
+                    Q_future = max(self.target_model.predict(new_state)[0]) #Cummulative future rewards
+                    # print("Q Future: ", Q_future)
+                    target[0][action] = reward + Q_future * self.gamma #The target of the self.model is to get the best current reward combined with all expected future rewards, multiplied by gamma.
+                # print("State: ", state)
+                # print("Target: ", target)
+                self.model.train_on_batch(state, target, sample_weight=None, class_weight=None, reset_metrics=True)
+                self.model.fit(state, target, epochs=10, verbose = 0) #Trains the number for a given amount of epochs #verbose = 1 shows a progress bar of how far you are with regards to the total amount of epochs 
+
             
-            state = state.reshape((1,404))
-            # print("new state: ", new_state.shape)
-            new_state = new_state.reshape((1,404))
-
-            target = self.target_model.predict(state)
-            if done: #If the Learning process is finished / converged, is the future reward is equal to the next step.
-                target[0][action] = reward #Direct reward that is given with these actions
-            else:
-                Q_future = max(self.target_model.predict(new_state) [0]) #Cummulative future rewards
-                # print("Q Future: ", Q_future)
-                target[0][action] = reward + Q_future * self.gamma #The target of the self.model is to get the best current reward combined with all expected future rewards, multiplied by gamma.
-            print("State: ", state)
-            print("Target: ", target)
-            self.model.fit(state, target, epochs=5, verbose=0) #Trains the number for a given amount of epochs #verbose = 1 shows a progress bar of how far you are with regards to the total amount of epochs 
-    
     def target_train(self): #Training the target model less frequently, to make sure its goal is more consistent over time.
         weights = self.model.get_weights()
         target_weights = self.target_model.get_weights()
@@ -95,11 +100,11 @@ class Q_learning:
         # print("In act state shape: ", state.shape)
         state = state.reshape((1,404))
         # print("New state shape: ", state.shape)
-        print(self.model.predict(state))
+        # print(self.model.predict(state))
         return np.argmax(self.model.predict(state)[0])
 #changed epislon_r to 0.1 for testing
 
-def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.999, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16): #Integrate all hyperparameters into relevant functions.
+def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16): #Integrate all hyperparameters into relevant functions.
     game = PacmanGame() #initialising PacmanGame
     trials = 30
     trial_len = 800
@@ -110,13 +115,13 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.999, epsilon_min_r = 
         game.restart()
         cur_state, dummy_1, dummy_2 = game.update(3) #Start the game and do nothing, to initialise and get the first environment
         rewards = 0 #The cummulative score for a specific game
-        print("Trial:", trial)
+        # print("Trial:", trial)
         for step in range(trial_len):
-            print("step: ",step, end='\r')
+            # print("step: ",step, end='\r')
             action = network.act(cur_state) #Create an action to take
             new_state, reward, done = game.update(action) #TO BE LOOKED INTO, correct outputs have to be given.
             # print("state: ", new_state.shape)
-            print("Total reward", rewards)
+            # print("Total reward", rewards)
             rewards += reward
             network.remember(cur_state, action, reward, new_state, done) #Remember all these parameters, to learn later.
             network.replay(batch_size = batch_size_r) #Replay with a batch from the memory, updating the model every sample of the batch_size.
@@ -344,6 +349,6 @@ def run(N = 2, gen_length = 14, num_generations = 5, Fitness_function = F):
     print("Fitness:",fitness[0],"New_Population",new_population[0],"Fitness_his",fitness_his)
     return(fitness[0], new_population[0], fitness_his)
 
-#best_fitness, best_genome, fitness_his = run()
-rewards_his, final_score = main()
+best_fitness, best_genome, fitness_his = run()
+# rewards_his, final_score = main()
 # print(rewards_his, final_score)
