@@ -200,43 +200,43 @@ class PacmanGame:
         if abs(self.pacman[0] - loc) < 100:
             self.chase = False
         if self.chase == True:
-            self.moveBlinky(clyde)
-            return
+            goal = self.findPac(self.pacman[0], loc)
         else:
-            plan = vector(0,0)
             goal = -self.findPac(self.pacman[0], loc)
-            if self.valid(loc + goal, False) and (goal != -course):
+        plan = vector(0,0)
+        if self.valid(loc + goal, False) and (goal != -course):
                 course.x = goal.x
                 course.y = goal.y
-            if self.valid(loc + course, False):
-                loc.move(course)
-            else:
+        if self.valid(loc + course, False):
+            loc.move(course)
+        else:
+            options = [
+                vector(20, 0),
+                vector(-20, 0),
+                vector(0, 20),
+                vector(0, -20),
+                ]
+            plan = choice(options)
+            while (self.valid(loc + plan, False) == False) or (plan == -course):
                 options = [
-                    vector(20, 0),
-                    vector(-20, 0),
-                    vector(0, 20),
-                    vector(0, -20),
-                    ]
+                vector(20, 0),
+                vector(-20, 0),
+                vector(0, 20),
+                vector(0, -20)
+                ]
                 plan = choice(options)
-                while (self.valid(loc + plan, False) == False) or (plan == -course):
-                    options = [
-                    vector(20, 0),
-                    vector(-20, 0),
-                    vector(0, 20),
-                    vector(0, -20)
-                    ]
-                    plan = choice(options)
-                course.x = plan.x
-                course.y = plan.y
-                loc.move(course)
-            self.ghost.up()
-            self.ghost.goto(loc.x + 10, loc.y + 10)
-            self.ghost.dot(20, col)
-            if self.i%1 == 0:
-                self.tiles[self.prev_index_clyde[0]] = self.prev_index_clyde[1]
-                self.prev_index_clyde[0] = self.offset(loc)
-                self.prev_index_clyde[1] = self.tiles[self.offset(loc)]
-                self.tiles[self.offset(loc)] = 5
+            course.x = plan.x
+            course.y = plan.y
+            loc.move(course)
+        self.ghost.up()
+        self.ghost.goto(loc.x + 10, loc.y + 10)
+        self.ghost.dot(20, col)
+        if self.i%1 == 0:
+            self.tiles[self.prev_index_clyde[0]] = self.prev_index_clyde[1]
+            self.prev_index_clyde[0] = self.offset(loc)
+            self.prev_index_clyde[1] = self.tiles[self.offset(loc)]
+            self.tiles[self.offset(loc)] = 5    
+            
 
     def movePinky(self, pinky, pacAim):
         loc = self.pinky[0]
@@ -502,9 +502,10 @@ class PacmanGame:
         if new_index == self.prev_index:
             self.reward += -100
         turtle.update()
-        print(self.reward)
+        print(self.get_gameOutput())
         time.sleep(0.4)
         self.window.ontimer(self.update(), 1000)
+        
 
     def run(self):
         # global attempt

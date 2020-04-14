@@ -8,7 +8,8 @@ import math
 import time
 from collections import deque
 from pacman_game import PacmanGame
-
+import matplotlib
+from matplotlib import pyplot as plt
 #Be sure to have installed all the libraries stated above, and tensorflow!
 
 
@@ -31,6 +32,35 @@ class Q_learning:
         self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
         self.target_model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
         self.min_observe = 100
+        '''#model_weights = self.model.get_weights()
+        #print("weights:", model_weights)
+        dummy = 1
+        #if dummy == 1:
+            #init_weights = [1.0 2.0 3.0 4.0]
+        f = open("weights.txt", "w+")
+        #if f.mode == 'r':
+            #init_weights = f.read()
+            #self.model.set_weights(init_weights)
+        model_weights = self.model.get_weights()
+        print("weights:", model_weights)
+        for i in range(len(model_weights)):
+            for j in range(len(model_weights[i])):
+                for k in range(len(model_weights[i][j])):
+                    if model_weights[i][j][k-1] == "[":
+                        f.write(str(model_weights[i][j][k]))
+                    if k+1 < len(model_weights[i][j]):
+                        if model_weights[i][j][k+1] == "]":
+                            f.write(str(model_weights[i][j][k]))
+                        else:
+                            f.write(str(model_weights[i][j][k]))
+                            f.write(",")
+                    else:
+                        f.write(str(model_weights[i][j][k]))
+                        f.write(",")
+                print(j)
+        f.close()'''
+        self.model.load_weights("weights.h5")
+        print(self.model.get_weights())
 
 
     def create_model(self, layers = 3, nodes_b = 50, nodes_h1 = 40, nodes_h2 = 30, nodes_h3 = 20, activation__ = "relu", loss__ = "mean_squared_error"):
@@ -137,7 +167,9 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
             
     return(rewards_his, final_score) #if final_score doesn't work, return rewards_his[-1]
 
-
+rewards_his, final_score = main()
+plt.plot(rewards_his)
+plt.show()
 #Testing if the DQN works:
 #main(gamma_r = 0.85, epsilon_r = 1.0, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.005, tau_r = 0.125, layers_r = 5, nodes_b_r = 80, nodes_h1_r = 40, nodes_h2_r = 20, nodes_h3_r = 10, activation_r = "relu", loss_r = "categorical_crossentropy", batch_size_r = 32)
 
@@ -324,14 +356,14 @@ def run(N = 2, gen_length = 14, num_generations = 5, Fitness_function = F):
     for individual in range(size_population):
         for gene in range(gen_length):
             new_population[individual, gene] = np.random.randint(0, 101) #int instead of flt to highly decrease calculation time
-    print(new_population)
+    #print(new_population)
 
     fitness = np.zeros(size_population) #initialise the fitness function as an array in which the fitness of all individuals can be described.
     fitness_his = [] #This variable will be used to plot the fitness over iterations.
     for generation in range(num_generations):
-        print("#Generation:", generation)
+        #print("#Generation:", generation)
         for individual in range(size_population):
-            print("#Individual: ", individual+1,"/", size_population)
+            #print("#Individual: ", individual+1,"/", size_population)
             fitness[individual] = Fitness_function(new_population[individual]) #The fitness is determined by the values of the genes of that individual
         Ranking = np.argsort(fitness)[::-1] #Ranking individuals from highest to lowest fitness value.
         fitness = fitness[Ranking] #Sort the fitness according to the ranks
@@ -346,9 +378,9 @@ def run(N = 2, gen_length = 14, num_generations = 5, Fitness_function = F):
     Ranking = np.argsort(fitness)[::-1]
     fitness = fitness[Ranking]
     new_population = new_population[Ranking]
-    print("Fitness:",fitness[0],"New_Population",new_population[0],"Fitness_his",fitness_his)
+    #print("Fitness:",fitness[0],"New_Population",new_population[0],"Fitness_his",fitness_his)
     return(fitness[0], new_population[0], fitness_his)
 
-best_fitness, best_genome, fitness_his = run()
+#best_fitness, best_genome, fitness_his = run()
 # rewards_his, final_score = main()
 # print(rewards_his, final_score)
