@@ -32,33 +32,6 @@ class Q_learning:
         self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
         self.target_model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
         self.min_observe = 100
-        '''#model_weights = self.model.get_weights()
-        #print("weights:", model_weights)
-        dummy = 1
-        #if dummy == 1:
-            #init_weights = [1.0 2.0 3.0 4.0]
-        f = open("weights.txt", "w+")
-        #if f.mode == 'r':
-            #init_weights = f.read()
-            #self.model.set_weights(init_weights)
-        model_weights = self.model.get_weights()
-        print("weights:", model_weights)
-        for i in range(len(model_weights)):
-            for j in range(len(model_weights[i])):
-                for k in range(len(model_weights[i][j])):
-                    if model_weights[i][j][k-1] == "[":
-                        f.write(str(model_weights[i][j][k]))
-                    if k+1 < len(model_weights[i][j]):
-                        if model_weights[i][j][k+1] == "]":
-                            f.write(str(model_weights[i][j][k]))
-                        else:
-                            f.write(str(model_weights[i][j][k]))
-                            f.write(",")
-                    else:
-                        f.write(str(model_weights[i][j][k]))
-                        f.write(",")
-                print(j)
-        f.close()'''
         self.model.load_weights("weights.h5")
         print(self.model.get_weights())
 
@@ -134,10 +107,10 @@ class Q_learning:
         return np.argmax(self.model.predict(state)[0])
 #changed epislon_r to 0.1 for testing
 
-def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16): #Integrate all hyperparameters into relevant functions.
+def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16, trials_r = 30, trial_len_r = 800): #Integrate all hyperparameters into relevant functions.
     game = PacmanGame() #initialising PacmanGame
-    trials = 30
-    trial_len = 800
+    trials = trials_r
+    trial_len = trial_len_r
 
     network = Q_learning(gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
     rewards_his = []
@@ -145,7 +118,7 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
         game.restart()
         cur_state, dummy_1, dummy_2 = game.update(3) #Start the game and do nothing, to initialise and get the first environment
         rewards = 0 #The cummulative score for a specific game
-        # print("Trial:", trial)
+        print("Trial:", trial)
         for step in range(trial_len):
             # print("step: ",step, end='\r')
             action = network.act(cur_state) #Create an action to take
@@ -167,9 +140,11 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
             
     return(rewards_his, final_score) #if final_score doesn't work, return rewards_his[-1]
 
-rewards_his, final_score = main()
-plt.plot(rewards_his)
-plt.show()
+for i in range(5):
+    rewards_his, final_score = main()
+    plt.plot(rewards_his)
+    plt.show()
+
 #Testing if the DQN works:
 #main(gamma_r = 0.85, epsilon_r = 1.0, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.005, tau_r = 0.125, layers_r = 5, nodes_b_r = 80, nodes_h1_r = 40, nodes_h2_r = 20, nodes_h3_r = 10, activation_r = "relu", loss_r = "categorical_crossentropy", batch_size_r = 32)
 

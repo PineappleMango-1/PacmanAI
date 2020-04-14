@@ -446,7 +446,7 @@ class PacmanGame:
         if self.tiles[index] == 1:
             self.tiles[index] = 2
             self.state['score'] += 1
-            reward = 5
+            reward = 20
             x = (index % 20) * 20 - 200
             y = 180 - (index // 20) * 20
             self.square(x, y)
