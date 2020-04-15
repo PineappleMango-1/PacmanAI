@@ -16,8 +16,8 @@ from matplotlib import pyplot as plt
 
 class Q_learning:
     #Creating the models
-    def __init__(self, gamma_ = 0.9, epsilon_ = 1, epsilon_decay_ = 0.995, epsilon_min_ = 0.01, lr_ = 1, tau_ = 0.1, layers_ = 3, nodes_b_ = 50, nodes_h1_ = 40, nodes_h2_ = 30, nodes_h3_ = 20, activation_ = "relu", loss_ = "mean_squared_error"):
-        self.memory = deque(maxlen = 800) #Make an empty deque to store information, which is a list-like datatype that can append data faster than a normal list. Maxlen is 800, as it will have enough batches to learn from by then.
+    def __init__(self, gamma_ = 0.95, epsilon_ = 1, epsilon_decay_ = 0.995, epsilon_min_ = 0.01, lr_ = 0.001, tau_ = 0.01, layers_ = 3, nodes_b_ = 300, nodes_h1_ = 200, nodes_h2_ = 150, nodes_h3_ = 100, activation_ = "relu", loss_ = "mean_squared_error"):
+        self.memory = deque(maxlen = 10000) #Make an empty deque to store information, which is a list-like datatype that can append data faster than a normal list. Maxlen is 800, as it will have enough batches to learn from by then.
         #Hyperparameters, to be tweaked by GA when initialising a NN with its unique 'i' hyperparameters.
         self.gamma = gamma_ #Discount factor. Every reward gets multiplied by gamma after each step, lowering the importance of initial reward.
         self.epsilon = epsilon_ #'Random' factor. The higher this value, the more not random choices are made (more reliant on the NN's weights and biases).
@@ -31,12 +31,12 @@ class Q_learning:
         #Where self.model keeps changing its 'ideal policy' with each iteration (where is my next food pallet?), target_model keeps the 'end goal' in sight (highest eventual score).
         self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
         self.target_model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
-        self.min_observe = 100
+        self.min_observe = 200
         self.model.load_weights("weights.h5")
         print(self.model.get_weights())
 
 
-    def create_model(self, layers = 3, nodes_b = 50, nodes_h1 = 40, nodes_h2 = 30, nodes_h3 = 20, activation__ = "relu", loss__ = "mean_squared_error"):
+    def create_model(self, layers = 3, nodes_b = 300, nodes_h1 = 200, nodes_h2 = 150, nodes_h3 = 20, activation__ = "relu", loss__ = "mean_squared_error"):
         model = Sequential() #Using the Built-in 'Sequential' architecture --> layer for layer in sequential order from input to output.
         #Now adding layers:
         model.add(Dense(nodes_b, input_shape=self.NN_input_shape, activation=activation__)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
@@ -61,7 +61,7 @@ class Q_learning:
          #For each iteration, add to the memory what action has been taken in which environment (state), what reward has been given and what the new state is.
     
     #Training the Neural Network:
-    def replay(self, batch_size = 64):
+    def replay(self, batch_size = 32):
         if len(self.memory) < self.min_observe: #sets a minimum amount of observations to learn from
             return
         else:
@@ -96,7 +96,8 @@ class Q_learning:
     def act(self, state):
         self.epsilon *= self.epsilon_decay #Update the epsilon value.
         self.epsilon = max(self.epsilon_min, self.epsilon) #If epsilon is lower than the threshold value, take the threshold value.
-
+        if len(self.memory) < self.min_observe: #We don't want to take policy action if there is nothing learnt yet
+            return np.random.randint(0,4)
         if np.random.random() < self.epsilon: #There is a epsilon probability that we will take a random action, instead of the action that seems to be best.
             return np.random.randint(0,4) #Take a random integer, representing either doign nothing, turning left, right, or turn around.
 
@@ -105,9 +106,12 @@ class Q_learning:
         # print("New state shape: ", state.shape)
         # print(self.model.predict(state))
         return np.argmax(self.model.predict(state)[0])
+
+    def save(self, file_name):
+        self.model.save_weights(file_name + ".h5")
 #changed epislon_r to 0.1 for testing
 
-def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 1, tau_r = 0.1, layers_r = 3, nodes_b_r = 50, nodes_h1_r = 40, nodes_h2_r = 30, nodes_h3_r = 20, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16, trials_r = 30, trial_len_r = 800): #Integrate all hyperparameters into relevant functions.
+def main(saving = False, file_name = "Final_weights" gamma_r = 0.95, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.05, tau_r = 0.05, layers_r = 3, nodes_b_r = 300, nodes_h1_r = 200, nodes_h2_r = 150, nodes_h3_r = 100, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16, trials_r = 30, trial_len_r = 800): #Integrate all hyperparameters into relevant functions.
     game = PacmanGame() #initialising PacmanGame
     trials = trials_r
     trial_len = trial_len_r
@@ -137,145 +141,64 @@ def main(gamma_r = 0.9, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 
                 print("Total steps: ", step)
                 print("final score: ", final_score)
                 break
-            
+    if saving:
+        network.save(file_name)
     return(rewards_his, final_score) #if final_score doesn't work, return rewards_his[-1]
-
-for i in range(5):
-    rewards_his, final_score = main()
-    plt.plot(rewards_his)
-    plt.show()
-
-#Testing if the DQN works:
-#main(gamma_r = 0.85, epsilon_r = 1.0, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.005, tau_r = 0.125, layers_r = 5, nodes_b_r = 80, nodes_h1_r = 40, nodes_h2_r = 20, nodes_h3_r = 10, activation_r = "relu", loss_r = "categorical_crossentropy", batch_size_r = 32)
 
 ###The Genetic Algorithm
 #For this project, the gen_length of the 'organisms' is equal to the amount of hyperparameters that have been indicated with 'hyperparameter_i' in the code, being 
 
-def F(genome): #The fitness function inputs a certain amount of hyperparameters into the NN_Basic, and outputs its accuracy
-    #n_epochs_i = int(math.ceil(genome[0])) ##Needs to be a whole number number that is not 0 --> integer & ceiling. Currently not used, due to Elena's advise.
-    
+def F(genome): #The fitness function inputs a certain amount of hyperparameters into the NN_Basic, and outputs its accuracy minus a training time penalty.
+
     #Pairs genome to actual hyperparameters. Given the initialisation between 0 and 100 for each genome entry, the code below makes it likely for the GA to pick 'sweet-spot values' of hyperparameters between 0 and 1. --> Faster convergence.
     #A quick summary of what genome entry rules over which hyperparameter:
     #genome[0] = gamma
-    #genome[1] = epsilon
-    #genome[2] = epsilon_decay
-    #genome[3] = epsilon_min
-    #genome[4] = learning rate (lr)
-    #genome[5] = tau
-    #genome[6] = activation (function)
-    #genome[7] = loss (function)
-    #genome[8] = amount of layers
-    #genome[9] = amount of nodes in hidden second layer
-    #genome[10] = amount of nodes in hidden third layer
-    #genome[11] = amount of nodes in hidden fourth layer
-    #genome[12] = amount of nodes in hidden first layer (after input)
+    #genome[1] = epsilon_decay
+    #genome[2] = learning rate (lr)
+    #genome[3] = tau
+    #genome[4] = amount of layers
+
     if genome[0] >= 1: #Value of gamma
         gamma_i = genome[1]/100
     elif genome[0] <= 0:
-        gamma_i = 0.000001 #to avoid /0 error, or get negative logs.
+        gamma_i = 0.00000001 #to avoid /0 error, or get negative logs.
     else:
         gamma_i = genome[0]
 
-    if genome[1] >= 1: #Epsilon value.
-        epsilon_i = genome[1]/100
+    if genome[1] >= 1: #Epsilon decay value.
+        epsilon_decay_i = genome[1]/100
     elif genome[1] <= 0:
-        epsilon_i = 0.000001 #to avoid /0 error, or get negative logs.
+        epsilon_decay_i = 0.00000001 #to avoid /0 error, or get negative logs.
     else:
-        epsilon_i = genome[1]
-
-    if genome[2] >= 1: #epsilon decay value
-        epsilon_decay_i = genome[2]/100
+        epsilon_decay_i = genome[1]
+    
+    if genome[2] >= 1: #learning rate
+        lr_i = genome[2]/100
     elif genome[2] <= 0:
-        epsilon_decay_i = 0.000001 #to avoid /0 error, or get negative logs.
+       lr_i = 0.00000001 #to avoid /0 error, or get negative logs.
     else:
-        epsilon_decay_i = genome[2]
+        lr_i = genome[2]
     
-    if genome[3] >= 1: #epsilon_min value
-        epsilon_min_i = genome[3]/100
+    if genome[3] >= 1: #tau value, usually around 0.001
+        tau_i = genome[3]/1000
     elif genome[3] <= 0:
-        epsilon_min_i = 0.000001 #to avoid /0 error, or get negative logs.
+        tau_i = 0.00000001 #to avoid /0 error, or get negative logs.
     else:
-        epsilon_min_i = genome[3]
-    
-    if genome[4] >= 1: #learning rate
-        lr_i = genome[4]/100
-    elif genome[4] <= 0:
-       lr_i = 0.000001 #to avoid /0 error, or get negative logs.
-    else:
-        lr_i = genome[4]
-    
-    if genome[5] >= 1: #tau value
-        tau_i = genome[5]/100
-    elif genome[5] <= 0:
-        tau_i = 0.000001 #to avoid /0 error, or get negative logs.
-    else:
-        tau_i = genome[5]
-
-    #In Keros, there are 9 activation functions available for hidden layers which do not neat tuning, being described below:
-    activation_list = ["relu", "tanh", "sigmoid", "hard_sigmoid", "exponential", "linear", "softmax", "softplus", "softsign"]
-    for i in range(1,len(activation_list)+1): #Grabs an activation based on the size of the genome.
-        if i == 0 and genome[6] < 100/(len(activation_list)):
-            activation_i = activation_list[i]
-        elif 100/(len(activation_list)/i)< genome[6] <= 100/(len(activation_list)/i+1):
-            activation_i = activation_list[i]
-        else:
-            activation_i = "linear" #Safeguard if genome[8] > 100, picked a function that is generally a bad activation function (does nothing).
-
-    #In Keros, there are 12 loss functions that do not require specific inputs (for example, only categorical targets)
-    loss_list = ["mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "squared_hinge", "hinge", "logcosh", "huber_loss", "binary_crossentropy", "kullback_leibler_divergence", "poisson", "cosine_proximity"]
-    for i in range(1,len(loss_list)+1):
-        if i == 0 and genome[7] < 100/(len(loss_list)):
-            loss_i = loss_list[i]
-        elif 100/(len(loss_list)/i)< genome[7] <= 100/(len(loss_list)/i+1):
-            loss_i = loss_list[i]
-        else:
-            loss_i = "mean_squared_error" #Safeguard if genome[7] > 100. I do not have a good understanding of loss functions, so I took the first one I saw (--> arbitrary).
-
-
+        tau_i = genome[3]
     #Number of total layers, which has a hard-coded max of 5 layers. Higher numbers will result in 5 layers to be created.
     layers_i = 2 #in- and output layer.
-    if genome[8] > 25:
+    if genome[4] > 25:
         layers_i += 1
-    if genome[8] > 50:
+    if genome[4] > 50:
         layers_i += 1
-    if genome[8] > 75:
+    if genome[4] > 75:
         layers_i += 1
-
-    #For nodes per layer, we might want to find a more efficient way (Maybe if layers_i == 3 for example, only load nodes_h1_i)
-    if genome[9] > 200: #Nodes in first hidden layer
-        nodes_h1_i = 200
-    elif genome[9] <= 1:
-        nodes_h1_i = 1
-    else:
-        nodes_h1_i = int(math.ceil(genome[9])) #Ceil is arbitrarely chosen here
-
-    if genome[10] > 200: #Nodes in second hidden layer
-        nodes_h2_i = 200
-    elif genome[10] <= 1:
-        nodes_h2_i = 1
-    else:
-        nodes_h2_i = int(math.ceil(genome[10])) #Ceil is arbitrarely chosen here
-
-    if genome[11] > 200: #Nodes in third hidden layer
-        nodes_h3_i = 200
-    elif genome[11] <= 1:
-        nodes_h3_i = 1
-    else:
-        nodes_h3_i = int(math.ceil(genome[11])) #Ceil is arbitrarely chosen here
-
-    if genome[12] > 200: #Nodes in the first layer, actually being the first true 'hidden' layer already.
-        nodes_b_i = 200
-    elif genome[12] <= 1:
-        nodes_b_i = 1
-    else:
-        nodes_b_i = int(math.ceil(genome[12]))
-
     #Now that all hyperparameters are entered, it is time to actually start the fitness function.
     t_0 = time.perf_counter()
-    rewards_his, final_score = main(gamma_r = gamma_i, epsilon_r = epsilon_i, epsilon_decay_r = epsilon_decay_i, epsilon_min_r = epsilon_min_i, lr_r = lr_i, tau_r = tau_i, layers_r = layers_i, nodes_b_r = nodes_b_i, nodes_h1_r = nodes_h1_i, nodes_h2_r = nodes_h2_i, nodes_h3_r = nodes_h3_i, activation_r = activation_i, loss_r = loss_i)
+    rewards_his, final_score = main(gamma_r = gamma_i, epsilon_decay_r = epsilon_decay_i, lr_r = lr_i, tau_r = tau_i, layers_r = layers_i)
     fitness_1 = final_score
     t_f = time.perf_counter()
-    Delta_t = (t_f - t_0) * 0.01 #Penalty to equalise points with training time's influence (it should be heavily penalised if calculations take too long, since it would slow down the training of all of the NNs significantly if they all take a lot of time).
+    Delta_t = (t_f - t_0) * 0.001 #Penalty to equalise points with training time's influence (it should be heavily penalised if calculations take too long, since it would slow down the training of all of the NNs significantly if they all take a lot of time).
     fitness = fitness_1 - Delta_t
     return(fitness)
 
@@ -324,7 +247,7 @@ def cross_and_mutate(pop, pop_size):
         mutate(offspring[i])
     return offspring
 
-def run(N = 2, gen_length = 14, num_generations = 5, Fitness_function = F):
+def run(N = 10, gen_length = 5, num_generations = 10, Fitness_function = F):
     size_population = 4 * N #the actual amount of individuals
     pop_size = (size_population, gen_length) #The entire population, described in terms of its population size and the amount of alleles per individual.
     new_population = np.ndarray((pop_size)) #Generate gen 0, with random values for each allele between 0 and 100. <--- ARBITRARY VALUES, FEEL FREE TO TWEAK!
@@ -356,6 +279,13 @@ def run(N = 2, gen_length = 14, num_generations = 5, Fitness_function = F):
     #print("Fitness:",fitness[0],"New_Population",new_population[0],"Fitness_his",fitness_his)
     return(fitness[0], new_population[0], fitness_his)
 
+'''Here, one can test if a particular set of hyperparameters result in positive outcomes of the training. The weights will be saved in an accompanying document if saving = True'''
+#rewards_his, final_score = main()
+#plt.plot(rewards_his)
+#plt.xlabel("Number of Trials")
+#plt.ylabel("Score")
+#plt.title("DQN [characteristic parameters]")
+#plt.show()
+
+'''Lastly, the GA can be turned on to find the best hyperparameters using the following line:'''
 #best_fitness, best_genome, fitness_his = run()
-# rewards_his, final_score = main()
-# print(rewards_his, final_score)
