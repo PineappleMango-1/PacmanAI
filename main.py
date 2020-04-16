@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 
 class Q_learning:
     #Creating the models
-    def __init__(self, gamma_ = 0.95, epsilon_ = 1, epsilon_decay_ = 0.995, epsilon_min_ = 0.01, lr_ = 0.001, tau_ = 0.01, layers_ = 3, nodes_b_ = 300, nodes_h1_ = 200, nodes_h2_ = 150, nodes_h3_ = 100, activation_ = "relu", loss_ = "mean_squared_error"):
+    def __init__(self, gamma_ = 0.95, epsilon_ = 1, epsilon_decay_ = 0.995, epsilon_min_ = 0.01, lr_ = 0.001, tau_ = 0.01, layers_ = 5, nodes_b_ = 300, nodes_h1_ = 200, nodes_h2_ = 150, nodes_h3_ = 100, activation_ = "relu", loss_ = "mean_squared_error"):
         self.memory = deque(maxlen = 10000) #Make an empty deque to store information, which is a list-like datatype that can append data faster than a normal list. Maxlen is 800, as it will have enough batches to learn from by then.
         #Hyperparameters, to be tweaked by GA when initialising a NN with its unique 'i' hyperparameters.
         self.gamma = gamma_ #Discount factor. Every reward gets multiplied by gamma after each step, lowering the importance of initial reward.
@@ -32,11 +32,11 @@ class Q_learning:
         self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
         self.target_model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
         self.min_observe = 200
-        self.model.load_weights("weights.h5")
+        #self.model.save_weights("weights5L.h5") Save weights
         print(self.model.get_weights())
 
 
-    def create_model(self, layers = 3, nodes_b = 300, nodes_h1 = 200, nodes_h2 = 150, nodes_h3 = 20, activation__ = "relu", loss__ = "mean_squared_error"):
+    def create_model(self, layers = 5, nodes_b = 300, nodes_h1 = 200, nodes_h2 = 150, nodes_h3 = 20, activation__ = "relu", loss__ = "mean_squared_error"):
         model = Sequential() #Using the Built-in 'Sequential' architecture --> layer for layer in sequential order from input to output.
         #Now adding layers:
         model.add(Dense(nodes_b, input_shape=self.NN_input_shape, activation=activation__)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
@@ -111,7 +111,7 @@ class Q_learning:
         self.model.save_weights(file_name + ".h5")
 #changed epislon_r to 0.1 for testing
 
-def main(saving = False, file_name = "Final_weights" gamma_r = 0.95, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.05, tau_r = 0.05, layers_r = 3, nodes_b_r = 300, nodes_h1_r = 200, nodes_h2_r = 150, nodes_h3_r = 100, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16, trials_r = 30, trial_len_r = 800): #Integrate all hyperparameters into relevant functions.
+def main(saving = False, file_name = "Final_weights", gamma_r = 0.95, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.05, tau_r = 0.05, layers_r = 3, nodes_b_r = 300, nodes_h1_r = 200, nodes_h2_r = 150, nodes_h3_r = 100, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16, trials_r = 100, trial_len_r = 800): #Integrate all hyperparameters into relevant functions.
     game = PacmanGame() #initialising PacmanGame
     trials = trials_r
     trial_len = trial_len_r
@@ -280,12 +280,12 @@ def run(N = 10, gen_length = 5, num_generations = 10, Fitness_function = F):
     return(fitness[0], new_population[0], fitness_his)
 
 '''Here, one can test if a particular set of hyperparameters result in positive outcomes of the training. The weights will be saved in an accompanying document if saving = True'''
-#rewards_his, final_score = main()
-#plt.plot(rewards_his)
-#plt.xlabel("Number of Trials")
-#plt.ylabel("Score")
-#plt.title("DQN [characteristic parameters]")
-#plt.show()
+rewards_his, final_score = main()
+plt.plot(rewards_his)
+plt.xlabel("Number of Trials")
+plt.ylabel("Score")
+plt.title("DQN [characteristic parameters]")
+plt.show()
 
 '''Lastly, the GA can be turned on to find the best hyperparameters using the following line:'''
 #best_fitness, best_genome, fitness_his = run()
