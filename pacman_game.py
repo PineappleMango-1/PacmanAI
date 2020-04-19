@@ -23,7 +23,7 @@ class PacmanGame:
         self.state = {'score': 0}
         self.path = turtle.Turtle(visible=False)
         self.writer = turtle.Turtle(visible=False)
-        self.aim = vector(20, 0)
+        self.aim = vector(0, 0)
         self.pacman = [vector(-40, -80), vector(0,0)]
         self.chase = False
         self.tunnel = [160, 161, 162, 163, 173, 174, 175, 176]
@@ -54,7 +54,7 @@ class PacmanGame:
         self.prev_index_inky = [self.offset(self.inky[0]), self.tiles[self.offset(self.inky[0])], self.offset(self.inky[0])]
         self.prev_index_pinky = [self.offset(self.pinky[0]), self.tiles[self.offset(self.pinky[0])], self.offset(self.pinky[0])]
         self.prev_index_clyde = [self.offset(self.clyde[0]), self.tiles[self.offset(self.clyde[0])], self.offset(self.clyde[0])]
-        self.attempt = 0
+        #self.attempt = 0
         self.i = 0
         self.j = 0
         self.pac.hideturtle()
@@ -136,16 +136,13 @@ class PacmanGame:
             self.pacman[0] = vector(100,20)
         if self.offset(self.pacman[0]) == 176:
             self.pacman[0] = vector(-200 , 20)
-        if self.attempt == 10:
-            self.aim = self.prev_aim.copy()
-            self.attempt = 0
         if self.valid(self.pacman[0] + self.aim, True):
             self.pacman[0].move(self.aim)
             self.prev_aim = self.aim.copy()
         else:
             if self.valid(self.pacman[0] + self.prev_aim, True):
                 self.pacman[0].move(self.prev_aim)
-                self.attempt += 1
+                #self.attempt += 1
 
         
     def moveBlinky(self, blinky):
@@ -418,7 +415,7 @@ class PacmanGame:
         self.prev_index_inky = [self.offset(self.inky[0]), self.tiles[self.offset(self.inky[0])], self.offset(self.inky[0])]
         self.prev_index_pinky = [self.offset(self.pinky[0]), self.tiles[self.offset(self.pinky[0])], self.offset(self.pinky[0])]
         self.prev_index_clyde = [self.offset(self.clyde[0]), self.tiles[self.offset(self.clyde[0])], self.offset(self.clyde[0])]
-        self.attempt = 0
+        #self.attempt = 0
         self.i = 0
         self.j = 0
         self.pac.hideturtle()
