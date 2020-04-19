@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 
 class Q_learning:
     #Creating the models
-    def __init__(self, gamma_ = 0.95, epsilon_ = 1, epsilon_decay_ = 0.995, epsilon_min_ = 0.01, lr_ = 0.001, tau_ = 0.01, layers_ = 5, nodes_b_ = 300, nodes_h1_ = 200, nodes_h2_ = 150, nodes_h3_ = 100, activation_ = "relu", loss_ = "mean_squared_error"):
+    def __init__(self, rand_ = False, gamma_ = 0.95, epsilon_ = 1, epsilon_decay_ = 0.995, epsilon_min_ = 0.01, lr_ = 0.001, tau_ = 0.01, layers_ = 2, nodes_b_ = 300, nodes_h1_ = 200, nodes_h2_ = 150, nodes_h3_ = 100, activation_ = "relu", loss_ = "mean_squared_error"):
         self.memory = deque(maxlen = 10000) #Make an empty deque to store information, which is a list-like datatype that can append data faster than a normal list. Maxlen is 800, as it will have enough batches to learn from by then.
         #Hyperparameters, to be tweaked by GA when initialising a NN with its unique 'i' hyperparameters.
         self.gamma = gamma_ #Discount factor. Every reward gets multiplied by gamma after each step, lowering the importance of initial reward.
@@ -29,14 +29,13 @@ class Q_learning:
         self.NN_input_shape = (404,) #Size of the state inputted by the game
         #NOTE: two models are created here, as DeepMind has proven this leads to quicker convergence in complex environments.
         #Where self.model keeps changing its 'ideal policy' with each iteration (where is my next food pallet?), target_model keeps the 'end goal' in sight (highest eventual score).
-        self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
-        self.target_model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
+        self.model = self.create_model(rand = rand_, layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
+        self.target_model = self.create_model(rand = rand_, layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
         self.min_observe = 200
-        #self.model.save_weights("weights5L.h5") Save weights
         print(self.model.get_weights())
 
 
-    def create_model(self, layers = 5, nodes_b = 300, nodes_h1 = 200, nodes_h2 = 150, nodes_h3 = 20, activation__ = "relu", loss__ = "mean_squared_error"):
+    def create_model(self, rand = False, layers = 5, nodes_b = 300, nodes_h1 = 200, nodes_h2 = 150, nodes_h3 = 20, activation__ = "relu", loss__ = "mean_squared_error"):
         model = Sequential() #Using the Built-in 'Sequential' architecture --> layer for layer in sequential order from input to output.
         #Now adding layers:
         model.add(Dense(nodes_b, input_shape=self.NN_input_shape, activation=activation__)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
@@ -47,6 +46,15 @@ class Q_learning:
         if layers >= 5:
             model.add(Dense(nodes_h3, activation=activation__))
         model.add(Dense(self.NN_output_size, activation = activation__)) #Changed it so we don't want a probability anymore, but instead make it calculate the expected reward
+        if not rand:
+            if layers == 2:
+                model.load_weights("weights2L.h5")
+            if layers == 3:
+                model.load_weights("weights3L.h5")
+            if layers == 4:
+                model.load_weights("weights4L.h5")
+            if layers == 5:
+                model.load_weights("weights5L.h5")
         model.compile(loss=loss__, optimizer = Adam(lr = self.lr))
         #Like Stochastic Gradient Descent (SGD), Adam is a optimization algorithm to optimize the policy of this NN. Unlike SGD, Adam is able to optimize the NN based on iterative based training data (--> no need for historical, labelled data).
         #The loss can be chosen from the Keras set by the GA, but is chosen as mean_squared_error (most straightforward) for now.
@@ -111,12 +119,14 @@ class Q_learning:
         self.model.save_weights(file_name + ".h5")
 #changed epislon_r to 0.1 for testing
 
-def main(saving = False, file_name = "Final_weights", gamma_r = 0.95, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.05, tau_r = 0.05, layers_r = 3, nodes_b_r = 300, nodes_h1_r = 200, nodes_h2_r = 150, nodes_h3_r = 100, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16, trials_r = 100, trial_len_r = 800): #Integrate all hyperparameters into relevant functions.
+def main(saving = False, rand_r = False, file_name = "Initial_weights", gamma_r = 0.95, epsilon_r = 1, epsilon_decay_r = 0.995, epsilon_min_r = 0.01, lr_r = 0.05, tau_r = 0.05, layers_r = 2, nodes_b_r = 300, nodes_h1_r = 200, nodes_h2_r = 150, nodes_h3_r = 100, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16, trials_r = 100, trial_len_r = 800): #Integrate all hyperparameters into relevant functions.
     game = PacmanGame() #initialising PacmanGame
     trials = trials_r
     trial_len = trial_len_r
 
-    network = Q_learning(gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
+    network = Q_learning(rand_ = rand_r, gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
+    if saving:
+        network.save(file_name)
     rewards_his = []
     for trial in range(trials):
         game.restart()
@@ -141,8 +151,7 @@ def main(saving = False, file_name = "Final_weights", gamma_r = 0.95, epsilon_r 
                 print("Total steps: ", step)
                 print("final score: ", final_score)
                 break
-    if saving:
-        network.save(file_name)
+    
     return(rewards_his, final_score) #if final_score doesn't work, return rewards_his[-1]
 
 ###The Genetic Algorithm
@@ -280,12 +289,18 @@ def run(N = 10, gen_length = 5, num_generations = 10, Fitness_function = F):
     return(fitness[0], new_population[0], fitness_his)
 
 '''Here, one can test if a particular set of hyperparameters result in positive outcomes of the training. The weights will be saved in an accompanying document if saving = True'''
-rewards_his, final_score = main()
-plt.plot(rewards_his)
-plt.xlabel("Number of Trials")
-plt.ylabel("Score")
-plt.title("DQN [characteristic parameters]")
-plt.show()
+rewards_his, final_score = main(layers_r = 3)
+#plt.plot(rewards_his)
+#plt.xlabel("Number of Trials")
+#plt.ylabel("Score")
+#plt.title("DQN 4 layers")
+#plt.show()
 
 '''Lastly, the GA can be turned on to find the best hyperparameters using the following line:'''
 #best_fitness, best_genome, fitness_his = run()
+
+'''To reset loading weights for different kinds of nodes:'''
+#main(saving = True, file_name="weights2L", rand_r = True, layers_r = 2, trials_r = 5)
+#main(saving = True, file_name="weights3L", rand_r = True, layers_r = 3, trials_r = 5)
+#main(saving = True, file_name="weights4L", rand_r = True, layers_r = 4, trials_r = 5)
+#main(saving = True, file_name="weights5L", rand_r = True, layers_r = 5, trials_r = 5)
