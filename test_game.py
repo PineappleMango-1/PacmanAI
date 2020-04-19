@@ -34,7 +34,7 @@ class TestGame:
         self.state = self.get_rand()
         self.i+=1
         return self.state, self.reward, self.done
-    def reset(self):
+    def restart(self):
         self.state = [1,0,0,0]
         self.i = 0
         self.done = False

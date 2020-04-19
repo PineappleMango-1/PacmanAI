@@ -3,6 +3,8 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
 from keras.optimizers import SGD
+from keras.optimizers import Adam
+from keras.optimizers import Adagrad
 import numpy as np
 import random
 import math
@@ -13,6 +15,7 @@ import matplotlib
 from matplotlib import pyplot as plt
 from keras.layers.advanced_activations import LeakyReLU
 from pacman_game import PacmanGame
+from test_game2 import Test2
 #Be sure to have installed all the libraries stated above, and tensorflow!
 
 
@@ -28,8 +31,8 @@ class Q_learning:
         self.epsilon_min = epsilon_min_ #Lowest value of epsilon, to ensure the NN still takes a random step sometimes, as it might accidently find a better policy --> helps against falling into local optima.
         self.lr =  lr_ #How big is the step we take in teh direction of current reward.
         self.tau = tau_ #Parameter to ensure that the step taken is not too big --> How much are we taking the last policy update into account?
-        self.NN_output_size = 4  #Number of inputs for the game (left, right, turn around)
-        self.NN_input_shape = (404,) #Size of the state inputted by the game
+        self.NN_output_size = 32  #Number of inputs for the game (left, right, turn around)
+        self.NN_input_shape = (10,) #Size of the state inputted by the game
         #NOTE: two models are created here, as DeepMind has proven this leads to quicker convergence in complex environments.
         #Where self.model keeps changing its 'ideal policy' with each iteration (where is my next food pallet?), target_model keeps the 'end goal' in sight (highest eventual score).
         self.model = self.create_model(layers = layers_, nodes_b = nodes_b_, nodes_h1 = nodes_h1_, nodes_h2 = nodes_h2_, nodes_h3 = nodes_h3_, activation__ = activation_, loss__ = loss_)
@@ -39,10 +42,10 @@ class Q_learning:
         #print(self.model.get_weights())
 
 
-    def create_model(self, layers = 3, nodes_b = 4, nodes_h1 = 200, nodes_h2 = 150, nodes_h3 = 20, activation__ = "tanh", loss__ = "mean_squared_error"):
+    def create_model(self, layers = 3, nodes_b = 100, nodes_h1 = 200, nodes_h2 = 150, nodes_h3 = 20, activation__ = "tanh", loss__ = "mean_squared_error"):
         model = Sequential() #Using the Built-in 'Sequential' architecture --> layer for layer in sequential order from input to output.
         #Now adding layers:
-        model.add(Dense(nodes_b, input_shape=self.NN_input_shape)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
+        '''model.add(Dense(nodes_b, input_shape=self.NN_input_shape)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
         model.add(LeakyReLU(alpha=0.3))
         model.add(Dropout(0.2))
         if layers >= 3:
@@ -57,7 +60,22 @@ class Q_learning:
             model.add(Dense(nodes_h3)) #After the initial layer, the amount of inputs does not need to be specified.
             model.add(LeakyReLU(alpha=0.3))
             model.add(Dropout(0.2))
-        model.add(Dense(self.NN_output_size, activation = "softmax")) #Changed it so we don't want a probability anymore, but instead make it calculate the expected reward
+        model.add(Dense(self.NN_output_size, activation = "softmax"))''' #Changed it so we don't want a probability anymore, but instead make it calculate the expected reward
+        model.add(Dense(nodes_b, input_shape=self.NN_input_shape, activation=activation__)) #Dense forward progegates. Furthermore, the parameters are (output_layer, initial_input, activation). activation_ & loss_ are used to prevent possible self-referencing errors
+        model.add(Dropout(0.2))
+        if layers >= 3:
+            model.add(Dense(nodes_h1, activation=activation__)) #After the initial layer, the amount of inputs does not need to be specified.
+            model.add(LeakyReLU(alpha=0.3))
+            #model.add(Dropout(0.2))
+        if layers >= 4:
+            model.add(Dense(nodes_h2, activation=activation__))
+            model.add(LeakyReLU(alpha=0.3))
+            #model.add(Dropout(0.2))
+        if layers >= 5:
+            model.add(Dense(nodes_h3, activation=activation__))
+            model.add(LeakyReLU(alpha=0.3))
+            #model.add(Dropout(0.2))
+        model.add(Dense(self.NN_output_size, activation = "softmax"))
         model.compile(loss=loss__, optimizer = SGD(lr = self.lr))
         #Like Stochastic Gradient Descent (SGD), Adam is a optimization algorithm to optimize the policy of this NN. Unlike SGD, Adam is able to optimize the NN based on iterative based training data (--> no need for historical, labelled data).
         #The loss can be chosen from the Keras set by the GA, but is chosen as mean_squared_error (most straightforward) for now.
@@ -80,9 +98,9 @@ class Q_learning:
             for sample in samples: #For the amount of samples:
                 state, action, reward, new_state, done = sample
                 
-                state = state.reshape((1,404))
+                state = state.reshape((1,10))
                 # print("new state: ", new_state.shape)
-                new_state = new_state.reshape((1,404))
+                new_state = new_state.reshape((1,10))
 
                 target = self.target_model.predict(state)
                 if done: #If the Learning process is finished / converged, is the future reward is equal to the next step.
@@ -94,7 +112,7 @@ class Q_learning:
                 # print("State: ", state)
                 # print("Target: ", target)
                 self.model.train_on_batch(state, target, sample_weight=None, class_weight=None, reset_metrics=True)
-                self.model.fit(state, target, epochs=250, verbose = 0) #Trains the number for a given amount of epochs #verbose = 1 shows a progress bar of how far you are with regards to the total amount of epochs 
+                self.model.fit(state, target, epochs=150, verbose = 0) #Trains the number for a given amount of epochs #verbose = 1 shows a progress bar of how far you are with regards to the total amount of epochs 
 
             
     def target_train(self): #Training the target model less frequently, to make sure its goal is more consistent over time.
@@ -108,39 +126,43 @@ class Q_learning:
         self.epsilon *= self.epsilon_decay #Update the epsilon value.
         self.epsilon = max(self.epsilon_min, self.epsilon) #If epsilon is lower than the threshold value, take the threshold value.
         if len(self.memory) < self.min_observe: #We don't want to take policy action if there is nothing learnt yet
-            return np.random.randint(0,4)
+            return np.random.randint(0,32)
         if np.random.random() < self.epsilon: #There is a epsilon probability that we will take a random action, instead of the action that seems to be best.
-            return np.random.randint(0,4) #Take a random integer, representing either doign nothing, turning left, right, or turn around.
+            return np.random.randint(0,32) #Take a random integer, representing either doign nothing, turning left, right, or turn around.
 
         # print("In act state shape: ", state.shape)
-        state = state.reshape((1,404))
+        state = state.reshape((1,10))
         # print("New state shape: ", state.shape)
         # print(self.model.predict(state))
-        print(self.model.predict(state))
-        return np.argmax(self.model.predict(state)[0])
+        #print(self.model.predict(state))
+        action = np.argmax(self.model.predict(state)[0])
+        print("action: ", action)
+        return action
 
     def save(self, file_name):
         self.model.save_weights(file_name + ".h5")
 #changed epislon_r to 0.1 for testing
 
-def main(saving = False, file_name = "Final_weights", gamma_r = 0.95, epsilon_r = 1, epsilon_decay_r = 0.99, epsilon_min_r = 0.01, lr_r = 0.05, tau_r = 0.05, layers_r = 5, nodes_b_r = 1000, nodes_h1_r = 1000, nodes_h2_r = 1000, nodes_h3_r = 500, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 32, trials_r = 100, trial_len_r = 800): #Integrate all hyperparameters into relevant functions.
-    game = PacmanGame() #initialising PacmanGame
+def main(saving = False, file_name = "Final_weights", gamma_r = 0.95, epsilon_r = 1, epsilon_decay_r = 0.994, epsilon_min_r = 0.001, lr_r = 0.01, tau_r = 0.05, layers_r = 4, nodes_b_r = 64, nodes_h1_r = 64, nodes_h2_r = 64, nodes_h3_r = 500, activation_r = "relu", loss_r = "mean_squared_error", batch_size_r = 16, trials_r = 100, trial_len_r = 800): #Integrate all hyperparameters into relevant functions.
+    game = Test2() #initialising PacmanGame
     trials = trials_r
     trial_len = trial_len_r
 
     network = Q_learning(gamma_ = gamma_r, epsilon_ = epsilon_r, epsilon_decay_ = epsilon_decay_r, epsilon_min_ = epsilon_min_r, lr_ = lr_r, tau_ = tau_r, layers_ = layers_r, nodes_b_ = nodes_b_r, nodes_h1_ = nodes_h1_r, nodes_h2_ = nodes_h2_r, nodes_h3_ = nodes_h3_r, activation_ = activation_r, loss_ = loss_r)
     rewards_his = []
     for trial in range(trials):
-        cur_state, dummy_1, dummy_2 = game.update(3) #Start the game and do nothing, to initialise and get the first environment
+        cur_state, dummy_1, dummy_2 = game.update(0) #Start the game and do nothing, to initialise and get the first environment
         rewards = 0 #The cummulative score for a specific game
         print("Trial:", trial)
         for step in range(trial_len):
             # print("step: ",step, end='\r')
+            print("state:", game.binaryToDecimal(cur_state))
             action = network.act(cur_state) #Create an action to take
             #print("State: ", cur_state, "Action: ", action)
             new_state, reward, done = game.update(action) #TO BE LOOKED INTO, correct outputs have to be given.
             # print("state: ", new_state.shape)
             # print("Total reward", rewards)
+            print("reward:", reward)
             rewards += reward
             network.remember(cur_state, action, reward, new_state, done) #Remember all these parameters, to learn later.
             network.replay(batch_size = batch_size_r) #Replay with a batch from the memory, updating the model every sample of the batch_size.
